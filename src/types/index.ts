@@ -28,3 +28,6 @@ export interface PetState {
   emotion: Emotion;
   isDragging: boolean;
 }
+
+// Re-export sprite types
+export * from './sprite';

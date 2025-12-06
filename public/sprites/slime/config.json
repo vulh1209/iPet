@@ -1,0 +1,48 @@
+{
+  "id": "slime",
+  "name": "Blue Slime",
+  "animations": {
+    "idle": {
+      "file": "idle.png",
+      "frames": 4,
+      "frameDuration": 200,
+      "loop": true
+    },
+    "walk": {
+      "file": "walk.png",
+      "frames": 4,
+      "frameDuration": 150,
+      "loop": true
+    },
+    "sleep": {
+      "file": "sleep.png",
+      "frames": 2,
+      "frameDuration": 500,
+      "loop": true
+    },
+    "happy": {
+      "file": "happy.png",
+      "frames": 4,
+      "frameDuration": 120,
+      "loop": true
+    },
+    "talk": {
+      "file": "talk.png",
+      "frames": 4,
+      "frameDuration": 150,
+      "loop": true
+    },
+    "curious": {
+      "file": "curious.png",
+      "frames": 2,
+      "frameDuration": 300,
+      "loop": true
+    },
+    "drag": {
+      "file": "drag.png",
+      "frames": 2,
+      "frameDuration": 100,
+      "loop": true
+    }
+  }
+}
