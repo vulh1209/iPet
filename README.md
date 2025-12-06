@@ -17,6 +17,12 @@ A cute slime pet that lives on your desktop, powered by Tauri + React + TypeScri
 - [x] Squish effect (compress/stretch) on landing
 - [x] Smooth settle animation (~600ms)
 
+### Phase 1.2: Random Directional Movement (Complete)
+- [x] Random direction movement (angle-based, not fixed position)
+- [x] Idle duration 10-20 seconds between movements
+- [x] Screen boundary protection (pet never leaves screen)
+- [x] Sprite flips correctly based on movement direction
+
 ### Phase 2: Sprite & Animation (Planned)
 - [ ] Sprite sheet animation system
 - [ ] Multiple animation states (idle, walk, sleep, happy, talk)

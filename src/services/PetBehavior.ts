@@ -19,8 +19,8 @@ export class PetBehavior {
 
   private readonly WANDER_SPEED = 30; // pixels per second
   private readonly PET_SIZE = 50;
-  private readonly IDLE_MIN = 2000;
-  private readonly IDLE_MAX = 5000;
+  private readonly IDLE_MIN = 10000; // 10 seconds minimum
+  private readonly IDLE_MAX = 20000; // 20 seconds maximum
   private readonly WANDER_CHANCE = 0.6;
 
   // Landing bounce physics
@@ -74,7 +74,7 @@ export class PetBehavior {
       const roll = Math.random();
       if (roll < this.WANDER_CHANCE) {
         this.transitionTo('wandering');
-        this.pickRandomTarget();
+        this.pickRandomDirection();
       } else {
         // Reset timer to stay idle longer
         this.stateTimer = 0;
@@ -189,12 +189,35 @@ export class PetBehavior {
     };
   }
 
-  private pickRandomTarget(): void {
-    const margin = this.PET_SIZE;
-    this.targetPosition = {
-      x: margin + Math.random() * (this.screenBounds.width - margin * 2 - this.PET_SIZE),
-      y: margin + Math.random() * (this.screenBounds.height - margin * 2 - this.PET_SIZE),
-    };
+  private pickRandomDirection(): void {
+    const maxAttempts = 5;
+
+    for (let i = 0; i < maxAttempts; i++) {
+      // Pick random angle (0 to 360 degrees)
+      const angle = Math.random() * Math.PI * 2;
+      // Random distance 50-200 pixels
+      const distance = this.randomInRange(50, 200);
+
+      // Calculate target based on direction
+      const targetX = this.position.x + Math.cos(angle) * distance;
+      const targetY = this.position.y + Math.sin(angle) * distance;
+
+      // Clamp to screen bounds
+      const clamped = this.clampToScreen({ x: targetX, y: targetY });
+
+      // Check if target is far enough (avoid edge cases when pet is in corner)
+      const dx = clamped.x - this.position.x;
+      const dy = clamped.y - this.position.y;
+      const actualDistance = Math.sqrt(dx * dx + dy * dy);
+
+      if (actualDistance >= 20) {
+        this.targetPosition = clamped;
+        return;
+      }
+    }
+
+    // Fallback: stay idle, don't move
+    this.targetPosition = null;
   }
 
   private transitionTo(newState: BehaviorState): void {
