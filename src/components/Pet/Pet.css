@@ -1,0 +1,17 @@
+.pet-container {
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: transparent;
+  cursor: grab;
+}
+
+.pet-container:active {
+  cursor: grabbing;
+}
+
+.pet-canvas {
+  background: transparent;
+}
