@@ -177,6 +177,7 @@
 .settings-section:nth-child(2) { animation: fadeInUp 0.5s var(--transition-smooth) 0.25s both; }
 .settings-section:nth-child(3) { animation: fadeInUp 0.5s var(--transition-smooth) 0.35s both; }
 .settings-section:nth-child(4) { animation: fadeInUp 0.5s var(--transition-smooth) 0.45s both; }
+.settings-section:nth-child(5) { animation: fadeInUp 0.5s var(--transition-smooth) 0.55s both; }
 
 .settings-section h2 {
   font-family: 'Quicksand', sans-serif;
@@ -604,4 +605,85 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   About Section
+   ═══════════════════════════════════════════════════════════════════ */
+
+.section-emoji {
+  font-size: 20px;
+  margin-right: 6px;
+}
+
+.about-section {
+  text-align: center;
+}
+
+.about-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.about-app {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.about-logo {
+  font-size: 40px;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.about-details {
+  text-align: left;
+}
+
+.about-name {
+  font-family: 'Quicksand', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.about-version {
+  font-size: 12px;
+  color: var(--text-hint);
+  font-weight: 500;
+}
+
+.about-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 4px 0 8px;
+  font-style: italic;
+}
+
+.about-author {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.author-label {
+  color: var(--text-hint);
+}
+
+.author-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s var(--transition-smooth);
+}
+
+.author-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
 }

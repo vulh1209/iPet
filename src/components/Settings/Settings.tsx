@@ -26,6 +26,15 @@ const SECTION_ICONS = {
   theme: '/icons/settings/theme.png',
 };
 
+// App info
+const APP_INFO = {
+  name: 'iPet',
+  version: '1.0.0',
+  author: 'Vu Le',
+  github: 'https://github.com/vulh1209/iPet',
+  description: 'Your adorable AI desktop companion',
+};
+
 export function Settings() {
   const { settings, loading, error, saveSettings } = useSettings();
   const [formData, setFormData] = useState<AppSettings | null>(null);
@@ -249,6 +258,32 @@ export function Settings() {
             <option value={90}>Keep for 90 days</option>
           </select>
           <p className="hint">Older conversations will be automatically removed</p>
+        </div>
+      </div>
+
+      {/* About Section */}
+      <div className="settings-section about-section">
+        <h2><span className="section-emoji">💝</span>About</h2>
+        <div className="about-content">
+          <div className="about-app">
+            <div className="about-logo">🐾</div>
+            <div className="about-details">
+              <div className="about-name">{APP_INFO.name}</div>
+              <div className="about-version">Version {APP_INFO.version}</div>
+            </div>
+          </div>
+          <p className="about-description">{APP_INFO.description}</p>
+          <div className="about-author">
+            <span className="author-label">Created with 💖 by</span>
+            <a
+              href={APP_INFO.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="author-link"
+            >
+              {APP_INFO.author}
+            </a>
+          </div>
         </div>
       </div>
 
