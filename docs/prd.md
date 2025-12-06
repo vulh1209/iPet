@@ -57,16 +57,21 @@ App macOS hiển thị cute slime pet di chuyển tự do trên desktop, tương
 ## Implementation Phases
 
 ### Phase 1: Foundation
-Pet xuất hiện và di chuyển trên màn hình
-- [ ] Tauri 2.0 project setup
-- [ ] Transparent window, always-on-top
-- [ ] Canvas rendering
-- [ ] Idle state + random wandering
-- [ ] Drag-and-drop
-- [ ] Screen boundary detection
+Pet appears and moves on screen
+- [x] Tauri 2.0 project setup
+- [x] Transparent window, always-on-top
+- [x] Canvas rendering
+- [x] Idle state + random wandering
+- [x] Drag-and-drop
+- [x] Screen boundary detection
+
+### Phase 1.1: Kawaii Landing Effect
+- [x] Spring physics bounce when dropping pet after drag
+- [x] Squish effect (compress/stretch) on landing
+- [x] Smooth settle animation (~600ms)
 
 ### Phase 2: Sprite & Animation
-Slime cute với animations mượt
+Cute slime with smooth animations
 - [ ] Sprite sheet (Google Imagen 3.0, cartoon style)
 - [ ] AnimationEngine (frame-based)
 - [ ] All animation states
@@ -75,7 +80,7 @@ Slime cute với animations mượt
 - [ ] Click reaction
 
 ### Phase 3: AI Integration
-Pet nói chuyện với user qua voice
+Pet talks with user via voice
 - [ ] AudioService (mic recording)
 - [ ] Double-click → listening
 - [ ] Gemini API (gemini-2.0-flash-exp)
@@ -93,7 +98,7 @@ Pet nói chuyện với user qua voice
 ---
 
 ## Quyết định đã xác nhận
-- **Gemini model**: gemini-2.0-flash-exp
+- **Gemini model**: gemini-2.0-flash
 - **Response style**: Emoji + Animation + Short text (3-4 từ)
 - **Settings**: System tray icon → Settings panel
 - **Sprite style**: Cartoon/Vector

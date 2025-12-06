@@ -19,6 +19,7 @@ export function Pet() {
   const [animation, setAnimation] = useState<AnimationType>('idle');
   const [direction, setDirection] = useState<Direction>('right');
   const [frame, setFrame] = useState(0);
+  const [squishFactor, setSquishFactor] = useState(1.0);
 
   // Initialize
   useEffect(() => {
@@ -66,6 +67,11 @@ export function Pet() {
 
         setAnimation(result.animation);
         setDirection(result.direction);
+        if (result.squishFactor !== undefined) {
+          setSquishFactor(result.squishFactor);
+        } else {
+          setSquishFactor(1.0);
+        }
       }
 
       // Update frame for animation
@@ -101,7 +107,10 @@ export function Pet() {
 
     // Bounce animation
     const bounceOffset = Math.sin(frame * 0.5) * 3;
-    const squish = animation === 'walk' ? 0.9 + Math.sin(frame * 0.8) * 0.1 : 1;
+    const walkSquish = animation === 'walk' ? 0.9 + Math.sin(frame * 0.8) * 0.1 : 1;
+    // Combine walk squish with landing squish (volume preservation: X * Y = constant)
+    const squishX = walkSquish / squishFactor;  // Wider when squishFactor > 1
+    const squishY = walkSquish * squishFactor;  // Shorter when squishFactor > 1
 
     ctx.save();
 
@@ -116,8 +125,8 @@ export function Pet() {
     ctx.ellipse(
       centerX,
       centerY - bounceOffset,
-      baseRadius * squish,
-      baseRadius / squish,
+      baseRadius * squishX,
+      baseRadius * squishY,
       0,
       0,
       Math.PI * 2

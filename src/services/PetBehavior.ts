@@ -1,11 +1,12 @@
 import { Position, AnimationType, Direction, ScreenBounds } from '../types';
 
-type BehaviorState = 'idle' | 'wandering' | 'sleeping' | 'being_dragged' | 'reacting';
+type BehaviorState = 'idle' | 'wandering' | 'sleeping' | 'being_dragged' | 'reacting' | 'landing';
 
 interface BehaviorResult {
   position: Position;
   animation: AnimationType;
   direction: Direction;
+  squishFactor?: number;
 }
 
 export class PetBehavior {
@@ -21,6 +22,16 @@ export class PetBehavior {
   private readonly IDLE_MIN = 2000;
   private readonly IDLE_MAX = 5000;
   private readonly WANDER_CHANCE = 0.6;
+
+  // Landing bounce physics
+  private landingBaseY: number = 0;
+  private landingVelocity: number = 0;
+  private landingOffset: number = 0;
+
+  private readonly SPRING_STIFFNESS = 150;   // Slower oscillation
+  private readonly SPRING_DAMPING = 5;       // Less damping = more bounces
+  private readonly BOUNCE_THRESHOLD = 0.3;
+  private readonly INITIAL_DROP_VELOCITY = 250; // Larger drop velocity
 
   constructor(initialPosition: Position, screenBounds: ScreenBounds) {
     this.position = initialPosition;
@@ -49,6 +60,8 @@ export class PetBehavior {
         return this.handleReactingState();
       case 'sleeping':
         return this.handleSleepingState();
+      case 'landing':
+        return this.handleLandingState(deltaTime);
       default:
         return this.handleIdleState();
     }
@@ -141,6 +154,41 @@ export class PetBehavior {
     };
   }
 
+  private handleLandingState(deltaTime: number): BehaviorResult {
+    const dt = deltaTime / 1000; // Convert to seconds
+
+    // Spring physics: F = -kx - bv
+    const springForce = -this.SPRING_STIFFNESS * this.landingOffset;
+    const dampingForce = -this.SPRING_DAMPING * this.landingVelocity;
+    const acceleration = springForce + dampingForce;
+
+    this.landingVelocity += acceleration * dt;
+    this.landingOffset += this.landingVelocity * dt;
+
+    // Squish: moving down = compress (wider), moving up = stretch (taller)
+    const squishFactor = Math.max(0.7, Math.min(1.3, 1 - this.landingVelocity * 0.002));
+
+    // Check if bounce has settled
+    if (Math.abs(this.landingOffset) < this.BOUNCE_THRESHOLD &&
+        Math.abs(this.landingVelocity) < this.BOUNCE_THRESHOLD) {
+      this.landingOffset = 0;
+      this.transitionTo('idle');
+      return {
+        position: { x: this.position.x, y: this.landingBaseY },
+        animation: 'idle',
+        direction: this.direction,
+        squishFactor: 1.0,
+      };
+    }
+
+    return {
+      position: { x: this.position.x, y: this.landingBaseY + this.landingOffset },
+      animation: 'idle',
+      direction: this.direction,
+      squishFactor,
+    };
+  }
+
   private pickRandomTarget(): void {
     const margin = this.PET_SIZE;
     this.targetPosition = {
@@ -165,11 +213,16 @@ export class PetBehavior {
 
   onDragEnd(newPosition: Position): void {
     this.position = this.clampToScreen(newPosition);
-    this.transitionTo('idle');
+    // Initialize landing bounce - pet falls DOWN then bounces up
+    this.landingBaseY = this.position.y;
+    this.landingOffset = 0;
+    this.landingVelocity = this.INITIAL_DROP_VELOCITY; // Downward velocity (positive Y = down)
+    this.transitionTo('landing');
   }
 
   onClick(): void {
-    if (this.currentState !== 'being_dragged') {
+    // Don't react if being dragged or landing (just dropped)
+    if (this.currentState !== 'being_dragged' && this.currentState !== 'landing') {
       this.transitionTo('reacting');
     }
   }
