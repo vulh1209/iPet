@@ -4,7 +4,7 @@ A cute slime pet that lives on your desktop, powered by Tauri + React + TypeScri
 
 ## Features
 
-### Phase 1 (Current)
+### Phase 1: Foundation (Complete)
 - [x] Transparent window always on top
 - [x] Cute slime pet with idle animation
 - [x] Random wandering movement
@@ -12,21 +12,28 @@ A cute slime pet that lives on your desktop, powered by Tauri + React + TypeScri
 - [x] Click reactions (happy animation)
 - [x] Screen boundary detection
 
-### Phase 2 (Planned)
+### Phase 1.1: Kawaii Landing Effect (Complete)
+- [x] Spring physics bounce when dropping pet
+- [x] Squish effect (compress/stretch) on landing
+- [x] Smooth settle animation (~600ms)
+
+### Phase 2: Sprite & Animation (Planned)
 - [ ] Sprite sheet animation system
 - [ ] Multiple animation states (idle, walk, sleep, happy, talk)
 - [ ] Skin system for different pets
 
-### Phase 3 (Planned)
+### Phase 3: AI Integration (Planned)
 - [ ] Voice input via microphone (double-click to activate)
 - [ ] Gemini AI integration for responses
 - [ ] Personality system
 - [ ] Emoji bubble responses
+- [ ] System tray + settings panel
 
-### Phase 4 (Planned)
-- [ ] System tray icon + settings
+### Phase 4: Polish & Distribution (Planned)
+- [ ] Error handling
+- [ ] macOS code signing
 - [ ] DMG packaging
-- [ ] App Store distribution
+- [ ] GitHub releases
 
 ## Tech Stack
 
