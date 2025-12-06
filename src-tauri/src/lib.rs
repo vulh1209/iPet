@@ -170,9 +170,9 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&settings_item, &quit_item])?;
 
             // Load tray icon
-            let icon = Image::from_path("icons/32x32.png").unwrap_or_else(|_| {
+            let icon = Image::from_path("icons/tray-icon-32.png").unwrap_or_else(|_| {
                 // Fallback: create a simple icon if file not found
-                Image::from_bytes(include_bytes!("../icons/32x32.png")).expect("Failed to load tray icon")
+                Image::from_bytes(include_bytes!("../icons/tray-icon-32.png")).expect("Failed to load tray icon")
             });
 
             // Build system tray

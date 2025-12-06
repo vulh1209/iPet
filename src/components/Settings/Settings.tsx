@@ -17,6 +17,15 @@ const PERSONALITY_EMOJI: Record<string, string> = {
   custom: '✨',
 };
 
+// Section icon paths
+const SECTION_ICONS = {
+  apiKey: '/icons/settings/api-key.png',
+  personality: '/icons/settings/mood.png',
+  microphone: '/icons/settings/microphone.png',
+  storage: '/icons/settings/storage.png',
+  theme: '/icons/settings/theme.png',
+};
+
 export function Settings() {
   const { settings, loading, error, saveSettings } = useSettings();
   const [formData, setFormData] = useState<AppSettings | null>(null);
@@ -114,7 +123,7 @@ export function Settings() {
 
       {/* API Key Section */}
       <div className="settings-section">
-        <h2 data-icon="🔑">Gemini API</h2>
+        <h2><img src={SECTION_ICONS.apiKey} alt="" className="section-icon" />Gemini API</h2>
         <div className="form-group">
           <label htmlFor="apiKey">API Key</label>
           <input
@@ -135,7 +144,7 @@ export function Settings() {
 
       {/* Personality Section */}
       <div className="settings-section">
-        <h2 data-icon="💫">Personality</h2>
+        <h2><img src={SECTION_ICONS.personality} alt="" className="section-icon" />Personality</h2>
         <div className="personality-options">
           {presetKeys.map((preset) => (
             <div
@@ -178,7 +187,7 @@ export function Settings() {
 
       {/* Microphone Section */}
       <div className="settings-section">
-        <h2 data-icon="🎤">Voice Input</h2>
+        <h2><img src={SECTION_ICONS.microphone} alt="" className="section-icon" />Voice Input</h2>
         <div className="form-group form-group-inline">
           <label>Enable Microphone</label>
           <label className="toggle-switch">
@@ -225,7 +234,7 @@ export function Settings() {
 
       {/* Storage Section */}
       <div className="settings-section">
-        <h2 data-icon="💾">Storage</h2>
+        <h2><img src={SECTION_ICONS.storage} alt="" className="section-icon" />Storage</h2>
         <div className="form-group">
           <label htmlFor="retentionDays">Conversation History</label>
           <select
