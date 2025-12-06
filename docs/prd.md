@@ -155,6 +155,14 @@ Pet appears and moves on screen
 | D | Dance Party | +15 | -15 | Requires energy ≥30 |
 | 5min idle | Quiet Time | +3 | +5 | Passive presence |
 
+### Phase 3.9: Cooldown Rejection Feedback (Complete)
+- [x] Rejection animation state in PetBehavior
+- [x] Reject sprite (4 frames - annoyed expressions)
+- [x] Gentle shake effect when action rejected
+- [x] X icon indicator (red circle with white X)
+- [x] Force wake up when pet is dragged while sleeping
+- [x] Keyboard shortcuts feedback (D, T, L keys)
+
 ### Phase 4: Polish & Distribution
 - [ ] Error handling
 - [ ] macOS code signing

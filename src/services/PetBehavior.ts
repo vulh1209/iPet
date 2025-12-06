@@ -1,12 +1,13 @@
 import { Position, AnimationType, Direction, ScreenBounds } from '../types';
 
-type BehaviorState = 'idle' | 'wandering' | 'sleeping' | 'being_dragged' | 'reacting' | 'landing' | 'listening';
+type BehaviorState = 'idle' | 'wandering' | 'sleeping' | 'being_dragged' | 'reacting' | 'landing' | 'listening' | 'rejecting';
 
 interface BehaviorResult {
   position: Position;
   animation: AnimationType;
   direction: Direction;
   squishFactor?: number;
+  isRejecting?: boolean;
 }
 
 export class PetBehavior {
@@ -28,6 +29,10 @@ export class PetBehavior {
   private landingBaseY: number = 0;
   private landingVelocity: number = 0;
   private landingOffset: number = 0;
+
+  // Rejection shake physics
+  private rejectShakeTime: number = 0;
+  private readonly REJECT_DURATION = 600; // ms
 
   private readonly SPRING_STIFFNESS = 150;   // Slower oscillation
   private readonly SPRING_DAMPING = 5;       // Less damping = more bounces
@@ -65,6 +70,8 @@ export class PetBehavior {
         return this.handleLandingState(deltaTime);
       case 'listening':
         return this.handleListeningState();
+      case 'rejecting':
+        return this.handleRejectingState(deltaTime);
       default:
         return this.handleIdleState();
     }
@@ -168,6 +175,34 @@ export class PetBehavior {
       position: this.position,
       animation: 'curious',
       direction: this.direction,
+    };
+  }
+
+  private handleRejectingState(deltaTime: number): BehaviorResult {
+    this.rejectShakeTime += deltaTime;
+
+    // Gentle shake animation using sine wave
+    const shakeIntensity = 1.5; // Reduced from 3
+    const shakeFrequency = 12; // Slower shake (was 20)
+    const shakeOffset = Math.sin(this.rejectShakeTime * shakeFrequency / 1000 * Math.PI * 2) * shakeIntensity;
+
+    // End rejection after duration
+    if (this.rejectShakeTime >= this.REJECT_DURATION) {
+      this.rejectShakeTime = 0;
+      this.transitionTo('idle');
+      return {
+        position: this.position,
+        animation: 'idle',
+        direction: this.direction,
+        isRejecting: false,
+      };
+    }
+
+    return {
+      position: { x: this.position.x + shakeOffset, y: this.position.y },
+      animation: 'reject',
+      direction: this.direction,
+      isRejecting: true,
     };
   }
 
@@ -279,6 +314,14 @@ export class PetBehavior {
   onListeningEnd(): void {
     if (this.currentState === 'listening') {
       this.transitionTo('idle');
+    }
+  }
+
+  onReject(): void {
+    // Can reject from idle or wandering states
+    if (this.currentState === 'idle' || this.currentState === 'wandering') {
+      this.rejectShakeTime = 0;
+      this.transitionTo('rejecting');
     }
   }
 

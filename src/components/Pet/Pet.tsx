@@ -101,6 +101,7 @@ export function Pet() {
   const [, setAnimation] = useState<AnimationType>('idle');
   const [, setDirection] = useState<Direction>('right');
   const [, setSquishFactor] = useState(1.0);
+  const [isRejecting, setIsRejecting] = useState(false);
 
   // Load sprites
   const { sprite, isLoading: spriteLoading } = useSprite('slime');
@@ -111,6 +112,7 @@ export function Pet() {
     energy,
     isSleeping,
     triggerInteraction,
+    forceWakeUp,
     canTriggerMorningGreeting,
   } = useMood();
 
@@ -189,6 +191,7 @@ export function Pet() {
         setAnimation(currentAnimation);
         setDirection(currentDirection);
         setSquishFactor(currentSquish);
+        setIsRejecting(result.isRejecting ?? false);
       } else {
         // While dragging: use drag animation
         animationTimeRef.current += deltaTime;
@@ -245,7 +248,9 @@ export function Pet() {
       y: e.clientY,
     };
     behaviorRef.current?.onDragStart();
-  }, []);
+    // Wake up pet if sleeping when dragged
+    forceWakeUp();
+  }, [forceWakeUp]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
@@ -304,6 +309,8 @@ export function Pet() {
         e.preventDefault();
         if (triggerInteraction('treat')) {
           behaviorRef.current?.onClick(); // Show happy reaction
+        } else {
+          behaviorRef.current?.onReject(); // Show rejection (cooldown/limit)
         }
       }
 
@@ -312,13 +319,17 @@ export function Pet() {
         e.preventDefault();
         if (triggerInteraction('danceParty')) {
           behaviorRef.current?.onClick(); // Show happy reaction
+        } else {
+          behaviorRef.current?.onReject(); // Show rejection (cooldown/low energy)
         }
       }
 
       // Press "L" for lullaby (puts pet to sleep)
       if (key === 'l' && !isSleeping) {
         e.preventDefault();
-        triggerInteraction('lullaby');
+        if (!triggerInteraction('lullaby')) {
+          behaviorRef.current?.onReject(); // Show rejection (cooldown)
+        }
       }
     };
 
@@ -434,6 +445,11 @@ export function Pet() {
 
         {showErrorIndicator && !showMicIndicator && (
           <div className="voice-indicator error" />
+        )}
+
+        {/* Rejection indicator - X icon when action on cooldown */}
+        {isRejecting && (
+          <div className="reject-indicator" />
         )}
       </div>
     </div>

@@ -15,7 +15,8 @@ export type AnimationType =
   | 'happy'
   | 'talk'
   | 'curious'
-  | 'drag';
+  | 'drag'
+  | 'reject';
 
 export type Direction = 'left' | 'right';
 

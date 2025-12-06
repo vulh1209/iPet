@@ -43,6 +43,12 @@
       "frames": 2,
       "frameDuration": 100,
       "loop": true
+    },
+    "reject": {
+      "file": "reject.png",
+      "frames": 4,
+      "frameDuration": 150,
+      "loop": false
     }
   }
 }

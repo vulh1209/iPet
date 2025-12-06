@@ -27,7 +27,8 @@ public/
         ├── happy.png        # 4 frames (512×128)
         ├── talk.png         # 4 frames (512×128)
         ├── curious.png      # 2 frames (256×128)
-        └── drag.png         # 2 frames (256×128)
+        ├── drag.png         # 2 frames (256×128)
+        └── reject.png       # 4 frames (512×128)
 ```
 
 ---
@@ -92,6 +93,7 @@ Effects:
 | 5 | `talk.png` | 4 | 512×128 | Mouth animation |
 | 6 | `curious.png` | 2 | 256×128 | Head tilt with ? |
 | 7 | `drag.png` | 2 | 256×128 | Stretched surprised |
+| 8 | `reject.png` | 4 | 512×128 | Pouting, shaking head |
 
 ---
 
@@ -374,6 +376,48 @@ Frame 2: Wobbling/jiggling from being held, slightly dizzy swirl eyes (@ @), cut
 
 ---
 
+### 8. reject.png
+
+**File:** `reject.png`
+**Path:** `public/sprites/slime/reject.png`
+**Size:** 512×128px (4 frames)
+
+```
+Create a horizontal sprite sheet of a super cute chibi slime character showing REJECT/REFUSING/POUTING expression.
+
+=== LAYOUT ===
+- Exactly 4 frames in a horizontal row
+- Total image: 512×128 pixels
+- Each frame: 128×128 pixels
+- Transparent PNG background
+
+=== CHARACTER DESIGN (Chibi Cute Style) ===
+- Body: Round squishy blob/slime, puffed up with annoyance
+- Color: Soft pastel blue #7EC8E3 with lighter highlight #B5E4F7
+- Eyes: Annoyed/pouty expression - either (>_<) squeezed shut OR flat unhappy eyes (−_−)
+- Mouth: Pouty frown, small upset line, or wavy dissatisfied mouth
+- Cheeks: Extra pink blush marks (embarrassed/annoyed pink!)
+- Character facing RIGHT
+- Floating effects: Small anger vein mark (💢), puff clouds, or cross symbol
+
+=== FRAME SEQUENCE (left to right) ===
+Frame 1: Body puffed up bigger than normal, eyes closed tight (>_<), small pout mouth, tiny anger vein (💢) appears, "hmph!" pose
+Frame 2: Shaking/wobbling LEFT, eyes still squeezed (><), bigger pout, cheeks puffed out with air, rejecting gesture
+Frame 3: Shaking/wobbling RIGHT, flat annoyed eyes (−_−), turning head away slightly, "no way!" expression, puff cloud effect
+Frame 4: Settling back to center, still pouty but slightly deflated, eyes half-closed with attitude (¬_¬), lingering small pout
+
+=== STYLE ===
+- Ultra cute Japanese chibi/kawaii aesthetic
+- ADORABLE pouting - must still look huggable even when upset!
+- "Tsundere" style rejection - cute angry, not scary
+- Emphasize the puffed cheeks and wobbling motion
+- Soft pastel colors throughout
+- Add tiny comedy effects (anger vein 💢, puff clouds)
+- This should make users go "aww so cute when angry!"
+```
+
+---
+
 ## 📝 Quick Reference Prompts
 
 Bảng prompt rút gọn để copy nhanh:
@@ -387,6 +431,7 @@ Bảng prompt rút gọn để copy nhanh:
 | `talk.png` | `Chibi kawaii blue slime sprite sheet, 4 frames 512×128px, TALKING animation. Pastel blue #7EC8E3, expressive eyes, pink blush, facing right. Frames: closed mouth→small "o"→wide open + "..."→closing smile. Transparent PNG.` |
 | `curious.png` | `Chibi kawaii blue slime sprite sheet, 2 frames 256×128px, CURIOUS expression. Pastel blue #7EC8E3, HUGE wondering eyes, small "o" mouth, floating "?", pink blush. Frames: tilt left→tilt right bigger eyes. Transparent PNG.` |
 | `drag.png` | `Chibi kawaii blue slime sprite sheet, 2 frames 256×128px, being DRAGGED/PICKED UP. Pastel blue #7EC8E3, surprised eyes (O_O), sweat drop, stretched vertically. Frames: stretched surprised→wobbling dizzy (@_@). Transparent PNG.` |
+| `reject.png` | `Chibi kawaii blue slime sprite sheet, 4 frames 512×128px, REJECT/POUTING animation. Pastel blue #7EC8E3, squeezed annoyed eyes (>_<), pouty frown, puffed cheeks, pink blush, facing right. Frames: puffed up "hmph"→shake left→shake right turning away→settling pouty. Tiny anger vein 💢, puff clouds. Transparent PNG, tsundere cute style.` |
 
 ---
 
@@ -444,6 +489,12 @@ Sau khi tạo xong sprites, tạo file `config.json`:
       "frames": 2,
       "frameDuration": 100,
       "loop": true
+    },
+    "reject": {
+      "file": "reject.png",
+      "frames": 4,
+      "frameDuration": 150,
+      "loop": false
     }
   },
   "defaultAnimation": "idle",

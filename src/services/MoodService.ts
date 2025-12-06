@@ -295,6 +295,13 @@ export class MoodService {
     return this.moodState.sleep.isSleeping;
   }
 
+  // Force wake up when pet is disturbed (e.g., dragged)
+  forceWakeUp(): void {
+    if (this.moodState.sleep.isSleeping) {
+      this.wakeUp();
+    }
+  }
+
   triggerInteraction(interactionId: string): boolean {
     const interaction = INTERACTIONS[interactionId];
     if (!interaction) {
