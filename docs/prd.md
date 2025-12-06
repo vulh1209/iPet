@@ -1,14 +1,14 @@
 # iPet - macOS Desktop Pet Application
 
-## Tổng quan
-App macOS hiển thị cute slime pet di chuyển tự do trên desktop, tương tác với user qua voice input và trả lời bằng emoji/animation thông qua Gemini AI.
+## Overview
+A macOS app displaying a cute slime pet that moves freely on the desktop, interacts with users via voice input, and responds with emojis/animations powered by Gemini AI.
 
 ---
 
 ## Tech Stack: **Tauri 2.0 + React + TypeScript**
 
-### Lý do chọn Tauri:
-| Tiêu chí | Tauri | Electron | Swift |
+### Why Tauri:
+| Criteria | Tauri | Electron | Swift |
 |----------|-------|----------|-------|
 | App Size | ~3 MB | ~100 MB | ~10 MB |
 | Memory | 30-50 MB | 100+ MB | 20-40 MB |
@@ -16,41 +16,41 @@ App macOS hiển thị cute slime pet di chuyển tự do trên desktop, tương
 | Transparent Window | Good | Hacky | Native |
 | App Store | Supported | Complex | Easiest |
 
-**Lợi thế:**
-- Project tham khảo: [WindowPet](https://github.com/SeakMengs/WindowPet)
-- Dùng TypeScript/React (web tech quen thuộc)
-- App nhẹ, performance tốt
-- Hỗ trợ transparent window + always-on-top
+**Advantages:**
+- Reference project: [WindowPet](https://github.com/SeakMengs/WindowPet)
+- Uses TypeScript/React (familiar web tech)
+- Lightweight, good performance
+- Supports transparent window + always-on-top
 
 ---
 
 ## Core Features
 
 ### 1. Pet Movement & Display
-- Transparent window luôn ở trên tất cả apps
-- Pet di chuyển tự do trong screen bounds
+- Transparent window always on top of all apps
+- Pet moves freely within screen bounds
 - Animation states: idle, walk, sleep, happy, talk, drag
-- Sprite sheet animation với Canvas 2D
+- Sprite sheet animation with Canvas 2D
 
 ### 2. User Interactions
 | Action | Behavior |
 |--------|----------|
-| Click | Pet react với animation vui (happy/curious) |
-| Double-click | Bật voice input, pet lắng nghe |
-| Drag | Kéo pet đến vị trí mới |
+| Click | Pet reacts with happy animation (happy/curious) |
+| Double-click | Activate voice input, pet listens |
+| Drag | Move pet to new position |
 | System Tray | Click tray icon → Settings panel |
 
 ### 3. AI Integration (Gemini)
-- **Voice Input**: Double-click → record mic → gửi audio to Gemini
+- **Voice Input**: Double-click → record mic → send audio to Gemini
 - **Personality System**: Preset personalities (Cheerful, Wise, Sleepy)
-- **Response**: Emotion + Animation + Emojis + Short text (3-4 từ max)
+- **Response**: Emotion + Animation + Emojis + Short text (3-4 words max)
 - **Memory**: Conversation history, context window ~20 messages
-- **NO TTS**: Chỉ visual response
+- **NO TTS**: Visual response only
 
 ### 4. Personality Presets
-- **Bubbles (Cheerful)**: Vui vẻ, hay dùng emoji, năng động
-- **Sage (Wise)**: Điềm tĩnh, thích chia sẻ kiến thức
-- **Drowsy (Sleepy)**: Hay ngủ, dễ thương, chậm rãi
+- **Bubbles (Cheerful)**: Energetic, loves emojis, active
+- **Sage (Wise)**: Calm, likes sharing knowledge
+- **Drowsy (Sleepy)**: Sleepy, cute, slow-paced
 
 ---
 
@@ -83,7 +83,7 @@ Cute slime with smooth animations
 Pet talks with user via voice
 - [ ] AudioService (mic recording)
 - [ ] Double-click → listening
-- [ ] Gemini API (gemini-2.0-flash-exp)
+- [ ] Gemini API (gemini-2.0-flash)
 - [ ] Personality system prompts
 - [ ] EmojiBubble component
 - [ ] Conversation memory
@@ -97,9 +97,9 @@ Pet talks with user via voice
 
 ---
 
-## Quyết định đã xác nhận
+## Confirmed Decisions
 - **Gemini model**: gemini-2.0-flash
-- **Response style**: Emoji + Animation + Short text (3-4 từ)
+- **Response style**: Emoji + Animation + Short text (3-4 words)
 - **Settings**: System tray icon → Settings panel
 - **Sprite style**: Cartoon/Vector
 - **Tech stack**: Tauri 2.0 + React + TypeScript
