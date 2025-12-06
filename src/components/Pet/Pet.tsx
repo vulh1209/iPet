@@ -15,7 +15,7 @@ export function Pet() {
 
   const [screenSize, setScreenSize] = useState({ width: 1920, height: 1080 });
   const [isDragging, setIsDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const dragOffsetRef = useRef({ x: 0, y: 0 });
   const [animation, setAnimation] = useState<AnimationType>('idle');
   const [direction, setDirection] = useState<Direction>('right');
   const [frame, setFrame] = useState(0);
@@ -232,19 +232,24 @@ export function Pet() {
 
   // Mouse handlers for drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
     setIsDragging(true);
-    setDragOffset({
+    // Lưu offset = vị trí click trong window (clientX/Y)
+    // Dùng ref để tránh stale closure trong event listeners
+    dragOffsetRef.current = {
       x: e.clientX,
       y: e.clientY,
-    });
+    };
     behaviorRef.current?.onDragStart();
   }, []);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!isDragging) return;
 
-    const newX = e.screenX - WINDOW_SIZE / 2;
-    const newY = e.screenY - WINDOW_SIZE / 2;
+    // Vị trí window mới = screenX/Y - offset
+    // screenX/Y là logical pixels, khớp với Tauri LogicalPosition
+    const newX = e.screenX - dragOffsetRef.current.x;
+    const newY = e.screenY - dragOffsetRef.current.y;
 
     invoke('set_window_position', {
       x: Math.round(newX),
@@ -255,9 +260,10 @@ export function Pet() {
   const handleMouseUp = useCallback((e: MouseEvent) => {
     if (isDragging) {
       setIsDragging(false);
+      // Tính vị trí cuối cùng dùng cùng công thức với handleMouseMove
       const newPosition = {
-        x: e.screenX - WINDOW_SIZE / 2,
-        y: e.screenY - WINDOW_SIZE / 2,
+        x: e.screenX - dragOffsetRef.current.x,
+        y: e.screenY - dragOffsetRef.current.y,
       };
       behaviorRef.current?.onDragEnd(newPosition);
     }

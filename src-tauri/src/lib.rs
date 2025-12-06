@@ -3,8 +3,9 @@ use tauri::Manager;
 #[tauri::command]
 fn set_window_position(app: tauri::AppHandle, x: i32, y: i32) {
     if let Some(window) = app.get_webview_window("main") {
-        let _ = window.set_position(tauri::Position::Physical(
-            tauri::PhysicalPosition { x, y }
+        // Dùng Logical position vì JS screenX/Y trả về logical pixels
+        let _ = window.set_position(tauri::Position::Logical(
+            tauri::LogicalPosition { x: x as f64, y: y as f64 }
         ));
     }
 }
