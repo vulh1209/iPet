@@ -16,6 +16,7 @@ export class PetBehavior {
   private position: Position;
   private screenBounds: ScreenBounds;
   private direction: Direction = 'right';
+  private isMoodSleeping: boolean = false; // Controlled by mood system
 
   private readonly WANDER_SPEED = 30; // pixels per second
   private readonly PET_SIZE = 50;
@@ -70,6 +71,12 @@ export class PetBehavior {
   }
 
   private handleIdleState(): BehaviorResult {
+    // If mood system says sleeping, transition to sleep
+    if (this.isMoodSleeping) {
+      this.transitionTo('sleeping');
+      return this.handleSleepingState();
+    }
+
     const idleDuration = this.randomInRange(this.IDLE_MIN, this.IDLE_MAX);
 
     if (this.stateTimer > idleDuration) {
@@ -284,5 +291,19 @@ export class PetBehavior {
 
   getState(): BehaviorState {
     return this.currentState;
+  }
+
+  // Mood system integration
+  setMoodSleeping(sleeping: boolean): void {
+    this.isMoodSleeping = sleeping;
+    if (sleeping && this.currentState !== 'being_dragged') {
+      this.transitionTo('sleeping');
+    } else if (!sleeping && this.currentState === 'sleeping') {
+      this.transitionTo('idle');
+    }
+  }
+
+  isSleeping(): boolean {
+    return this.currentState === 'sleeping';
   }
 }

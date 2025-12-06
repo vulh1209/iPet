@@ -48,6 +48,54 @@ impl Default for AppSettings {
     }
 }
 
+// Mood system types
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MoodStats {
+    pub happiness: f32,
+    pub energy: f32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MoodTimestamps {
+    #[serde(rename = "lastInteraction")]
+    pub last_interaction: u64,
+    #[serde(rename = "lastSleepEnd")]
+    pub last_sleep_end: u64,
+    #[serde(rename = "appLastClosed")]
+    pub app_last_closed: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SleepState {
+    #[serde(rename = "isSleeping")]
+    pub is_sleeping: bool,
+    #[serde(rename = "sleepStartTime")]
+    pub sleep_start_time: Option<u64>,
+    #[serde(rename = "scheduledWakeTime")]
+    pub scheduled_wake_time: Option<u64>,
+    #[serde(rename = "nextSleepTime")]
+    pub next_sleep_time: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct InteractionCounts {
+    #[serde(rename = "todayDate")]
+    pub today_date: String,
+    pub treats: u32,
+    #[serde(rename = "morningGreeting")]
+    pub morning_greeting: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PetMoodState {
+    pub version: u8,
+    pub stats: MoodStats,
+    pub timestamps: MoodTimestamps,
+    pub sleep: SleepState,
+    #[serde(rename = "interactionCounts")]
+    pub interaction_counts: InteractionCounts,
+}
+
 // Get settings directory path (~/.ipet/)
 fn get_settings_dir() -> PathBuf {
     let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("."));
@@ -57,6 +105,11 @@ fn get_settings_dir() -> PathBuf {
 // Get settings file path (~/.ipet/settings.json)
 fn get_settings_path() -> PathBuf {
     get_settings_dir().join("settings.json")
+}
+
+// Get mood file path (~/.ipet/mood.json)
+fn get_mood_path() -> PathBuf {
+    get_settings_dir().join("mood.json")
 }
 
 #[tauri::command]
@@ -93,6 +146,44 @@ fn save_settings(settings: AppSettings) -> Result<(), String> {
 
     fs::write(&path, content)
         .map_err(|e| format!("Failed to write settings: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+fn load_mood() -> Result<Option<PetMoodState>, String> {
+    let path = get_mood_path();
+
+    if !path.exists() {
+        // Return None if file doesn't exist - frontend will create default
+        return Ok(None);
+    }
+
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read mood: {}", e))?;
+
+    let mood: PetMoodState = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse mood: {}", e))?;
+
+    Ok(Some(mood))
+}
+
+#[tauri::command]
+fn save_mood(mood: PetMoodState) -> Result<(), String> {
+    let dir = get_settings_dir();
+    let path = get_mood_path();
+
+    // Create directory if it doesn't exist
+    if !dir.exists() {
+        fs::create_dir_all(&dir)
+            .map_err(|e| format!("Failed to create directory: {}", e))?;
+    }
+
+    let content = serde_json::to_string_pretty(&mood)
+        .map_err(|e| format!("Failed to serialize mood: {}", e))?;
+
+    fs::write(&path, content)
+        .map_err(|e| format!("Failed to write mood: {}", e))?;
 
     Ok(())
 }
@@ -154,6 +245,8 @@ pub fn run() {
             get_screen_size,
             load_settings,
             save_settings,
+            load_mood,
+            save_mood,
             open_settings_window,
             close_settings_window
         ])

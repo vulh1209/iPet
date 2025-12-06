@@ -132,6 +132,29 @@ Pet appears and moves on screen
 - [x] State machine updates (listening, processing, idle)
 - [x] Error indicator for failed requests
 
+### Phase 3.8: Pet Mood System (Complete)
+- [x] Two core stats: Happiness (0-100) and Energy (0-100)
+- [x] Time-based decay (random 10min-1hour delay before decay starts)
+- [x] Offline decay calculation (50% rate, capped at 24 hours)
+- [x] Sleep cycle (every 1-3 hours, sleeps 10-30 minutes)
+- [x] Visual mood indicator (happiness/energy bars + sleep icon)
+- [x] Persistence to ~/.ipet/mood.json
+- [x] 10 creative interactions with cooldowns and daily limits
+
+#### Mood Interactions
+| Key | Interaction | Happiness | Energy | Notes |
+|-----|-------------|-----------|--------|-------|
+| Click | Petting | +7 | +2 | 2s cooldown |
+| V | Voice Chat | +15 | -5 | Via Gemini |
+| T | Give Treat | +8 | +10 | 5/day limit |
+| Double-click | Play Catch | +12 | -10 | Requires energy ≥20 |
+| Drag+release | Gentle Shake | +3 | +5 | Uses bounce physics |
+| L | Lullaby | +5 | - | Triggers sleep |
+| First click/day | Morning Greeting | +20 | +10 | Once per day |
+| Voice w/ positive words | Compliment | +10 | - | Detects "love", "cute", etc. |
+| D | Dance Party | +15 | -15 | Requires energy ≥30 |
+| 5min idle | Quiet Time | +3 | +5 | Passive presence |
+
 ### Phase 4: Polish & Distribution
 - [ ] Error handling
 - [ ] macOS code signing

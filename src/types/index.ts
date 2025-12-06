@@ -31,3 +31,6 @@ export interface PetState {
 
 // Re-export sprite types
 export * from './sprite';
+
+// Re-export mood types
+export * from './mood';

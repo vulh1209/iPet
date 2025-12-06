@@ -5,8 +5,10 @@ import { AnimationType, Direction } from '../../types';
 import { useSprite } from '../../hooks/useSprite';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { useSettings } from '../../hooks/useSettings';
+import { useMood } from '../../hooks/useMood';
 import { LoadedSprite } from '../../types/sprite';
 import { getFrameRect, getFrameIndex } from '../../services/SpriteLoader';
+import { MoodIndicator } from '../MoodIndicator';
 import './Pet.css';
 
 const WINDOW_SIZE = 100;
@@ -102,6 +104,15 @@ export function Pet() {
 
   // Load sprites
   const { sprite, isLoading: spriteLoading } = useSprite('slime');
+
+  // Mood system
+  const {
+    happiness,
+    energy,
+    isSleeping,
+    triggerInteraction,
+    canTriggerMorningGreeting,
+  } = useMood();
 
   // Voice input
   const { settings } = useSettings();
@@ -259,28 +270,61 @@ export function Pet() {
     }
   }, [isDragging]);
 
-  // Click = pet react
+  // Click = pet react + mood interaction
   const handleClick = useCallback(() => {
     if (isDragging) return;
-    behaviorRef.current?.onClick();
-  }, [isDragging]);
 
-  // Keyboard shortcut: press "V" to start voice input
+    // Check for morning greeting bonus (first interaction of the day)
+    if (canTriggerMorningGreeting) {
+      triggerInteraction('morningGreeting');
+    }
+
+    // Trigger petting interaction
+    triggerInteraction('pet');
+    behaviorRef.current?.onClick();
+  }, [isDragging, canTriggerMorningGreeting, triggerInteraction]);
+
+  // Keyboard shortcuts for interactions
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if sleeping (except for some interactions)
+      const key = e.key.toLowerCase();
+
       // Press "V" to start voice input
-      if (e.key === 'v' || e.key === 'V') {
-        if (settings.microphone.enabled && !isListening && !isProcessing) {
+      if (key === 'v') {
+        if (settings.microphone.enabled && !isListening && !isProcessing && !isSleeping) {
           e.preventDefault();
           startListening();
           behaviorRef.current?.onListeningStart();
         }
       }
+
+      // Press "T" to give treat
+      if (key === 't' && !isSleeping) {
+        e.preventDefault();
+        if (triggerInteraction('treat')) {
+          behaviorRef.current?.onClick(); // Show happy reaction
+        }
+      }
+
+      // Press "D" for dance party
+      if (key === 'd' && !isSleeping) {
+        e.preventDefault();
+        if (triggerInteraction('danceParty')) {
+          behaviorRef.current?.onClick(); // Show happy reaction
+        }
+      }
+
+      // Press "L" for lullaby (puts pet to sleep)
+      if (key === 'l' && !isSleeping) {
+        e.preventDefault();
+        triggerInteraction('lullaby');
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [settings.microphone.enabled, isListening, isProcessing, startListening]);
+  }, [settings.microphone.enabled, isListening, isProcessing, isSleeping, startListening, triggerInteraction]);
 
   // Global mouse event listeners for drag
   useEffect(() => {
@@ -302,6 +346,26 @@ export function Pet() {
       behaviorRef.current?.onListeningEnd();
     }
   }, [isListening, isProcessing]);
+
+  // Sync mood sleeping state with behavior
+  useEffect(() => {
+    behaviorRef.current?.setMoodSleeping(isSleeping);
+  }, [isSleeping]);
+
+  // Trigger voice chat interaction when we get a response
+  useEffect(() => {
+    if (response?.text) {
+      triggerInteraction('voiceChat');
+
+      // Check for compliment in the transcript
+      const lowerTranscript = (transcript || '').toLowerCase();
+      const complimentWords = ['good', 'love', 'cute', 'beautiful', 'pretty', 'sweet', 'adorable', 'yêu', 'thương', 'xinh', 'đẹp'];
+      const hasCompliment = complimentWords.some(word => lowerTranscript.includes(word));
+      if (hasCompliment) {
+        triggerInteraction('compliment');
+      }
+    }
+  }, [response, transcript, triggerInteraction]);
 
   // Stop listening on unmount
   useEffect(() => {
@@ -353,6 +417,14 @@ export function Pet() {
           height={WINDOW_SIZE}
           onMouseDown={handleMouseDown}
           className="pet-canvas"
+        />
+
+        {/* Mood indicator */}
+        <MoodIndicator
+          happiness={happiness}
+          energy={energy}
+          isSleeping={isSleeping}
+          isActive={showMicIndicator}
         />
 
         {/* Voice input indicators - pure CSS visual */}
