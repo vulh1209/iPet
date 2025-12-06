@@ -108,6 +108,15 @@ fn set_window_position(app: tauri::AppHandle, x: i32, y: i32) {
 }
 
 #[tauri::command]
+fn set_window_size(app: tauri::AppHandle, width: u32, height: u32) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_size(tauri::Size::Logical(
+            tauri::LogicalSize { width: width as f64, height: height as f64 }
+        ));
+    }
+}
+
+#[tauri::command]
 fn get_screen_size(app: tauri::AppHandle) -> (u32, u32) {
     if let Some(window) = app.get_webview_window("main") {
         if let Ok(Some(monitor)) = window.current_monitor() {
@@ -138,8 +147,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_macos_permissions::init())
         .invoke_handler(tauri::generate_handler![
             set_window_position,
+            set_window_size,
             get_screen_size,
             load_settings,
             save_settings,

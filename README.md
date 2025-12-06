@@ -1,76 +1,31 @@
-# iPet - macOS Desktop Pet
+# iPet - macOS Desktop Pet 🐾
 
-A cute slime pet that lives on your desktop, powered by Tauri + React + TypeScript.
+A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeScript + Gemini AI.
+
+![iPet Demo](docs/demo.gif)
 
 ## Features
 
-### Phase 1: Foundation (Complete)
-- [x] Transparent window always on top
-- [x] Cute slime pet with idle animation
-- [x] Random wandering movement
-- [x] Drag and drop support
-- [x] Click reactions (happy animation)
-- [x] Screen boundary detection
+### Desktop Pet
+- Transparent window always on top
+- Multiple animations (idle, walk, happy, sleep, drag, curious)
+- Spring physics bounce when dropped
+- Random wandering movement
+- Click reactions
 
-### Phase 1.1: Kawaii Landing Effect (Complete)
-- [x] Spring physics bounce when dropping pet
-- [x] Squish effect (compress/stretch) on landing
-- [x] Smooth settle animation (~600ms)
+### Voice Interaction
+- Press **"V"** to activate voice input
+- AI-powered responses via Google Gemini
+- Short kawaii responses (3 words + emojis)
+- Beautiful glassmorphism speech bubble
 
-### Phase 1.2: Random Directional Movement (Complete)
-- [x] Random direction movement (angle-based, not fixed position)
-- [x] Idle duration 10-20 seconds between movements
-- [x] Screen boundary protection (pet never leaves screen)
-- [x] Sprite flips correctly based on movement direction
+### Settings
+- System tray menu
+- Personality presets (Bubbles, Sage, Drowsy, Custom)
+- Dark/light theme support
+- Configurable API key
 
-### Phase 2.1: Sprite Animation System (Complete)
-- [x] Sprite sheet animation system
-- [x] Multiple animation states (idle, walk, sleep, happy, drag)
-- [x] Auto-detect frame size from sprite dimensions
-- [x] Aspect ratio preservation when rendering
-
-### Phase 2.2: Animation Enhancement (Complete)
-- [x] DeltaTime-based frame timing (accurate to config frameDuration)
-- [x] Squish/bounce effects on sprites when landing
-- [x] Optimized rendering (only redraw when frame changes, ~90% less CPU)
-- [x] Drawing integrated into game loop
-
-### Phase 2.3: Skin System (Planned)
-- [ ] System tray menu for skin selection
-- [ ] Multiple pet skins
-- [ ] Skin preference persistence
-
-### Phase 3.1: Settings Infrastructure (Complete)
-- [x] File system storage (~/.ipet/settings.json)
-- [x] Settings types and service layer
-- [x] useSettings React hook
-
-### Phase 3.2: Settings UI & System Tray (Complete)
-- [x] System tray icon with menu
-- [x] Beautiful Settings window (glassmorphism design)
-- [x] Dark/light theme (follows system preference)
-- [x] Personality presets (Bubbles, Sage, Drowsy, Custom)
-- [x] Microphone and storage configuration
-
-### Phase 3.3-3.7: AI Integration (Planned)
-- [ ] Voice input via microphone (double-click to activate)
-- [ ] Gemini AI integration for responses
-- [ ] Conversation history with retention
-- [ ] Speech bubble responses
-
-### Phase 4: Polish & Distribution (Planned)
-- [ ] Error handling
-- [ ] macOS code signing
-- [ ] DMG packaging
-- [ ] GitHub releases
-
-## Tech Stack
-
-- **Frontend**: React + TypeScript + Vite
-- **Backend**: Tauri 2.0 (Rust)
-- **AI**: Google Gemini API (planned)
-
-## Development
+## Quick Start
 
 ### Prerequisites
 - Node.js 18+
@@ -79,45 +34,77 @@ A cute slime pet that lives on your desktop, powered by Tauri + React + TypeScri
 
 ### Setup
 ```bash
+# Install dependencies
 npm install
-```
 
-### Run Development
-```bash
+# Run development
 npm run tauri dev
-```
 
-### Build
-```bash
+# Build for production
 npm run tauri build
 ```
+
+### Configuration
+1. Open Settings from system tray
+2. Enter your Gemini API key
+3. Choose a personality preset
+4. Enable microphone access
+
+## Usage
+
+| Action | Result |
+|--------|--------|
+| Click | Pet reacts with happy animation |
+| Drag | Move pet anywhere on screen |
+| Press "V" | Start voice input |
+| System Tray | Access settings |
+
+## Tech Stack
+
+- **Frontend**: React + TypeScript + Vite
+- **Backend**: Tauri 2.0 (Rust)
+- **AI**: Google Gemini 2.0 Flash Lite
+- **Speech**: Web Speech API
 
 ## Project Structure
 
 ```
 ipet/
-├── src/                    # React frontend
+├── src/                      # React frontend
 │   ├── components/
-│   │   ├── Pet/           # Pet component
-│   │   └── Settings/      # Settings panel (glassmorphism UI)
+│   │   ├── Pet/              # Pet component + animations
+│   │   └── Settings/         # Settings UI (glassmorphism)
 │   ├── hooks/
-│   │   ├── useSprite.ts   # Sprite loading hook
-│   │   └── useSettings.ts # Settings management hook
+│   │   ├── useSprite.ts      # Sprite loading
+│   │   ├── useSettings.ts    # Settings state
+│   │   └── useVoiceInput.ts  # Voice recognition
 │   ├── services/
-│   │   ├── PetBehavior.ts # Pet state machine
-│   │   ├── SpriteLoader.ts # Sprite loading service
-│   │   └── SettingsService.ts # Settings persistence
-│   └── types/             # TypeScript types
-├── src-tauri/             # Rust backend
-│   ├── src/
-│   │   └── lib.rs         # Tauri commands + settings
-│   └── tauri.conf.json    # Window config (main + settings)
-├── settings.html          # Settings window entry
-└── public/
-    └── sprites/           # Sprite assets
-        └── slime/         # Slime skin sprites
+│   │   ├── PetBehavior.ts    # Pet state machine
+│   │   ├── GeminiService.ts  # AI integration
+│   │   └── SpeechRecognitionService.ts
+│   └── types/
+├── src-tauri/                # Rust backend
+│   └── src/lib.rs            # Tauri commands
+├── public/sprites/           # Sprite assets
+└── docs/                     # Documentation
+    └── PRD.md                # Product requirements
 ```
+
+## Roadmap
+
+- [x] Desktop pet with animations
+- [x] Voice input + Gemini AI
+- [x] Settings system
+- [x] Glassmorphism speech bubble
+- [ ] Multiple pet skins
+- [ ] Pet mood system
+- [ ] macOS code signing
+- [ ] Windows/Linux support
 
 ## License
 
 MIT
+
+---
+
+Made with 💕 by SIPHER

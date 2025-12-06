@@ -102,31 +102,35 @@ Pet appears and moves on screen
 - [x] Dark/light theme support (follows system)
 - [x] Sections: API Key, Personality, Microphone, Storage
 
-### Phase 3.3: Voice Recognition (Planned)
-- [ ] Web Speech API integration
-- [ ] Double-click → listening state
-- [ ] Silence detection (2s timeout)
-- [ ] Visual indicator when listening
+### Phase 3.3: Voice Recognition (Complete)
+- [x] Web Speech API integration
+- [x] Press "V" → listening state
+- [x] Silence detection (2s timeout)
+- [x] Visual indicator when listening (glowing orb)
+- [x] "Curious" animation while listening
 
-### Phase 3.4: Conversation History (Planned)
-- [ ] Conversation storage at ~/.ipet/conversations.json
-- [ ] 30-day retention (configurable)
-- [ ] Auto-cleanup old messages
+### Phase 3.4: Conversation History (Complete)
+- [x] In-memory conversation history
+- [x] 20-message context window
+- [x] Auto-cleanup old messages
 
-### Phase 3.5: Gemini AI Integration (Planned)
-- [ ] Gemini API (gemini-2.0-flash)
-- [ ] Personality system prompts
-- [ ] JSON response format (emoji, text, emotion)
+### Phase 3.5: Gemini AI Integration (Complete)
+- [x] Gemini API (gemini-2.0-flash-lite)
+- [x] Personality system prompts
+- [x] Short responses (MAX 3 words + emojis)
+- [x] Temperature 0.9 for creative responses
 
-### Phase 3.6: Speech Bubble UI (Planned)
-- [ ] Manga-style speech bubble
-- [ ] Expand pet window when showing bubble
-- [ ] Animation triggers based on emotion
+### Phase 3.6: Speech Bubble UI (Complete)
+- [x] Magical Glass Aurora speech bubble
+- [x] Glassmorphism with animated gradient border
+- [x] Floating sparkle decorations
+- [x] Expand pet window when showing bubble
+- [x] Gentle float animation
 
-### Phase 3.7: Full Integration (Planned)
-- [ ] Complete voice → AI → response flow
-- [ ] Error handling
-- [ ] State machine updates (listening, thinking, speaking)
+### Phase 3.7: Full Integration (Complete)
+- [x] Complete voice → AI → response flow
+- [x] State machine updates (listening, processing, idle)
+- [x] Error indicator for failed requests
 
 ### Phase 4: Polish & Distribution
 - [ ] Error handling
@@ -137,8 +141,65 @@ Pet appears and moves on screen
 ---
 
 ## Confirmed Decisions
-- **Gemini model**: gemini-2.0-flash
-- **Response style**: Emoji + Animation + Short text (3-4 words)
+- **Gemini model**: gemini-2.0-flash-lite
+- **Response style**: MAX 3 words + 1-2 cute emojis (💕✨🌟💖🎀🌸😊🥰💫🐾)
 - **Settings**: System tray icon → Settings panel
-- **Sprite style**: Cartoon/Vector
+- **Sprite style**: Cartoon/Vector (kawaii slime)
 - **Tech stack**: Tauri 2.0 + React + TypeScript
+- **Voice activation**: Press "V" key
+
+---
+
+## Design System
+
+### Speech Bubble - Magical Glass Aurora
+
+**Visual Style:**
+- Glassmorphism with animated aurora gradient border
+- Colors: Pink (#ff6b9d) → Purple (#c44dff) → Blue (#6b8cff) → Teal (#4dffea) → Yellow (#ffe44d)
+- Floating sparkle decorations (4 sparkles + 1 star)
+- Semi-transparent content area (45% opacity)
+
+**Typography:**
+- Font: Quicksand (700 weight)
+- Size: 13px
+- Text shadow for visibility on transparent background
+- Center aligned
+
+**Animations:**
+| Animation | Duration | Effect |
+|-----------|----------|--------|
+| bubble-appear | 0.5s | Bouncy scale entrance |
+| aurora-shift | 4s | Gradient position shift |
+| gentle-float | 3s | Subtle Y movement |
+| sparkle-float | 2-3s | Sparkle bounce (staggered) |
+| star-twinkle | 1.5s | Scale + rotation |
+| tail-wiggle | 3s | Bubble tail movement |
+
+### Voice Indicator
+
+**States:**
+- `listening`: Pastel gradient (#a8edea → #fed6e3) + breathe animation
+- `processing`: Purple gradient (#667eea → #764ba2) + spinner
+- `error`: Pink gradient (#ff9a9e → #fecfef) + shake animation
+
+---
+
+## AI System Prompt
+
+```
+You are a kawaii virtual pet named iPet. Personality: {traits}.
+
+STRICT RULES:
+- Reply with MAX 3 WORDS only (excluding emojis)
+- ALWAYS use 1-2 cute emojis 💕✨🌟💖🎀🌸😊🥰💫🐾
+- Match user's language
+- Be expressive through emojis, not words
+- Examples: "Yay! 💕✨" "Love you! 🥰" "Hihi~ 🌸" "Okiee 💫" "Đói quá! 🍜💕"
+```
+
+**Generation Config:**
+- Temperature: 0.9
+- Max Tokens: 30
+- Top P: 0.9
+- Top K: 40

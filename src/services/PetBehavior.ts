@@ -1,6 +1,6 @@
 import { Position, AnimationType, Direction, ScreenBounds } from '../types';
 
-type BehaviorState = 'idle' | 'wandering' | 'sleeping' | 'being_dragged' | 'reacting' | 'landing';
+type BehaviorState = 'idle' | 'wandering' | 'sleeping' | 'being_dragged' | 'reacting' | 'landing' | 'listening';
 
 interface BehaviorResult {
   position: Position;
@@ -62,6 +62,8 @@ export class PetBehavior {
         return this.handleSleepingState();
       case 'landing':
         return this.handleLandingState(deltaTime);
+      case 'listening':
+        return this.handleListeningState();
       default:
         return this.handleIdleState();
     }
@@ -150,6 +152,14 @@ export class PetBehavior {
     return {
       position: this.position,
       animation: 'sleep',
+      direction: this.direction,
+    };
+  }
+
+  private handleListeningState(): BehaviorResult {
+    return {
+      position: this.position,
+      animation: 'curious',
       direction: this.direction,
     };
   }
@@ -244,9 +254,24 @@ export class PetBehavior {
   }
 
   onClick(): void {
-    // Don't react if being dragged or landing (just dropped)
-    if (this.currentState !== 'being_dragged' && this.currentState !== 'landing') {
+    // Don't react if being dragged, landing, or listening
+    if (this.currentState !== 'being_dragged' &&
+        this.currentState !== 'landing' &&
+        this.currentState !== 'listening') {
       this.transitionTo('reacting');
+    }
+  }
+
+  onListeningStart(): void {
+    // Can start listening from any state except being_dragged
+    if (this.currentState !== 'being_dragged') {
+      this.transitionTo('listening');
+    }
+  }
+
+  onListeningEnd(): void {
+    if (this.currentState === 'listening') {
+      this.transitionTo('idle');
     }
   }
 

@@ -3,11 +3,14 @@ import { invoke } from '@tauri-apps/api/core';
 import { PetBehavior } from '../../services/PetBehavior';
 import { AnimationType, Direction } from '../../types';
 import { useSprite } from '../../hooks/useSprite';
+import { useVoiceInput } from '../../hooks/useVoiceInput';
+import { useSettings } from '../../hooks/useSettings';
 import { LoadedSprite } from '../../types/sprite';
 import { getFrameRect, getFrameIndex } from '../../services/SpriteLoader';
 import './Pet.css';
 
 const WINDOW_SIZE = 100;
+const EXPANDED_HEIGHT = 220; // Extra height for speech bubble with decorations
 
 /**
  * Draw sprite to canvas with transforms (direction flip, squish effect)
@@ -99,6 +102,20 @@ export function Pet() {
 
   // Load sprites
   const { sprite, isLoading: spriteLoading } = useSprite('slime');
+
+  // Voice input
+  const { settings } = useSettings();
+  const {
+    isListening,
+    isProcessing,
+    transcript,
+    response,
+    error: voiceError,
+    startListening,
+    stopListening,
+  } = useVoiceInput();
+
+  // Right-click for voice input (double-click conflicts with app close)
 
   // Initialize
   useEffect(() => {
@@ -242,11 +259,28 @@ export function Pet() {
     }
   }, [isDragging]);
 
+  // Click = pet react
   const handleClick = useCallback(() => {
-    if (!isDragging) {
-      behaviorRef.current?.onClick();
-    }
+    if (isDragging) return;
+    behaviorRef.current?.onClick();
   }, [isDragging]);
+
+  // Keyboard shortcut: press "V" to start voice input
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Press "V" to start voice input
+      if (e.key === 'v' || e.key === 'V') {
+        if (settings.microphone.enabled && !isListening && !isProcessing) {
+          e.preventDefault();
+          startListening();
+          behaviorRef.current?.onListeningStart();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [settings.microphone.enabled, isListening, isProcessing, startListening]);
 
   // Global mouse event listeners for drag
   useEffect(() => {
@@ -261,15 +295,75 @@ export function Pet() {
     };
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
+  // Handle voice input state changes
+  useEffect(() => {
+    if (!isListening && !isProcessing) {
+      // Voice input ended - transition pet back to idle
+      behaviorRef.current?.onListeningEnd();
+    }
+  }, [isListening, isProcessing]);
+
+  // Stop listening on unmount
+  useEffect(() => {
+    return () => {
+      stopListening();
+    };
+  }, [stopListening]);
+
+  // Determine which indicator to show
+  const showMicIndicator = isListening || isProcessing;
+  const showErrorIndicator = voiceError !== null;
+  const showSpeechBubble = !!(transcript || response?.text);
+
+  // Resize window when speech bubble needs to show
+  useEffect(() => {
+    if (showSpeechBubble) {
+      // Expand window to fit speech bubble above
+      invoke('set_window_size', { width: WINDOW_SIZE, height: EXPANDED_HEIGHT });
+    } else {
+      // Return to normal size
+      invoke('set_window_size', { width: WINDOW_SIZE, height: WINDOW_SIZE });
+    }
+  }, [showSpeechBubble]);
+
   return (
     <div className="pet-container" onClick={handleClick}>
-      <canvas
-        ref={canvasRef}
-        width={WINDOW_SIZE}
-        height={WINDOW_SIZE}
-        onMouseDown={handleMouseDown}
-        className="pet-canvas"
-      />
+      {/* Speech bubble for transcript/response - above pet */}
+      {showSpeechBubble && (
+        <div className="speech-bubble">
+          {/* Floating sparkle decorations */}
+          <span className="speech-sparkle speech-sparkle--1" />
+          <span className="speech-sparkle speech-sparkle--2" />
+          <span className="speech-sparkle speech-sparkle--3" />
+          <span className="speech-sparkle speech-sparkle--4" />
+          <span className="speech-star" />
+
+          {/* Glass content area */}
+          <div className="speech-bubble-content">
+            {response?.text || transcript}
+          </div>
+        </div>
+      )}
+
+      {/* Pet canvas - at bottom */}
+      <div className="pet-wrapper">
+        <canvas
+          ref={canvasRef}
+          width={WINDOW_SIZE}
+          height={WINDOW_SIZE}
+          onMouseDown={handleMouseDown}
+          className="pet-canvas"
+        />
+
+        {/* Voice input indicators - pure CSS visual */}
+        {showMicIndicator && (
+          <div className={`voice-indicator ${isProcessing ? 'processing' : 'listening'}`} />
+        )}
+
+        {showErrorIndicator && !showMicIndicator && (
+          <div className="voice-indicator error" />
+        )}
+      </div>
     </div>
   );
 }

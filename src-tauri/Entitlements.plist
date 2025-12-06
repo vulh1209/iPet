@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Allow microphone access -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+
+    <!-- Allow speech recognition -->
+    <key>com.apple.security.personal-information.speech-recognition</key>
+    <true/>
+
+    <!-- Allow network access for speech recognition service -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+
+    <!-- Inherit entitlements (for dev mode) -->
+    <key>com.apple.security.inherit</key>
+    <true/>
+</dict>
+</plist>

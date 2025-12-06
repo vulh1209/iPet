@@ -1,17 +1,463 @@
+/* ========================================
+   iPet Speech Bubble - Kawaii Aesthetic
+   Soft, breathing, magical feel
+   ======================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap');
+
 .pet-container {
   width: 100px;
-  height: 100px;
+  height: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
   background: transparent;
   cursor: grab;
+  position: relative;
+  overflow: visible;
 }
 
 .pet-container:active {
   cursor: grabbing;
 }
 
+.pet-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+
 .pet-canvas {
   background: transparent;
+}
+
+/* ========================================
+   Voice Input Indicator - Glowing Orb
+   ======================================== */
+.voice-indicator {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  z-index: 10;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.voice-indicator.listening {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  box-shadow:
+    0 0 12px rgba(168, 237, 234, 0.6),
+    0 0 24px rgba(254, 214, 227, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  animation: breathe 2s ease-in-out infinite, glow-pulse 1.5s ease-in-out infinite;
+}
+
+.voice-indicator.processing {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow:
+    0 0 16px rgba(102, 126, 234, 0.6),
+    0 0 32px rgba(118, 75, 162, 0.3);
+  animation: spin-glow 1s linear infinite;
+}
+
+.voice-indicator.processing::before {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid transparent;
+  border-top-color: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.voice-indicator.error {
+  background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  box-shadow: 0 0 12px rgba(255, 154, 158, 0.5);
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(168, 237, 234, 0.6),
+      0 0 24px rgba(254, 214, 227, 0.4),
+      inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 0 18px rgba(168, 237, 234, 0.8),
+      0 0 36px rgba(254, 214, 227, 0.5),
+      inset 0 1px 2px rgba(255, 255, 255, 0.8);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spin-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 16px rgba(102, 126, 234, 0.6),
+      0 0 32px rgba(118, 75, 162, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(102, 126, 234, 0.8),
+      0 0 40px rgba(118, 75, 162, 0.5);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px) rotate(-5deg); }
+  40% { transform: translateX(4px) rotate(5deg); }
+  60% { transform: translateX(-3px) rotate(-3deg); }
+  80% { transform: translateX(3px) rotate(3deg); }
+}
+
+/* ========================================
+   Speech Bubble - Magical Glass Aurora
+   Glassmorphism + Aurora border + Dreamy feel
+   ======================================== */
+
+/* Outer wrapper for aurora border effect */
+.speech-bubble {
+  --aurora-1: #ff6b9d;
+  --aurora-2: #c44dff;
+  --aurora-3: #6b8cff;
+  --aurora-4: #4dffea;
+  --aurora-5: #ffe44d;
+
+  position: relative;
+  flex-shrink: 0;
+  margin-bottom: 8px;
+  padding: 2px;
+  max-width: 180px;
+  min-width: 70px;
+
+  /* Aurora gradient border - animated */
+  background: linear-gradient(
+    135deg,
+    var(--aurora-1) 0%,
+    var(--aurora-2) 25%,
+    var(--aurora-3) 50%,
+    var(--aurora-4) 75%,
+    var(--aurora-5) 100%
+  );
+  background-size: 300% 300%;
+
+  /* Organic blob shape */
+  border-radius: 20px 20px 20px 6px;
+
+  z-index: 20;
+
+  /* Outer glow */
+  box-shadow:
+    0 0 20px rgba(196, 77, 255, 0.3),
+    0 0 40px rgba(107, 140, 255, 0.2),
+    0 8px 32px rgba(100, 80, 160, 0.25);
+
+  /* Animations */
+  animation:
+    bubble-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    aurora-shift 4s ease-in-out infinite 0.5s,
+    gentle-float 3s ease-in-out infinite 0.5s;
+}
+
+/* Inner glass content area */
+.speech-bubble-content {
+  position: relative;
+  padding: 10px 14px;
+  max-height: 70px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  /* More transparent glassmorphism */
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(248, 245, 255, 0.4) 50%,
+    rgba(255, 250, 255, 0.45) 100%
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  /* Match parent shape */
+  border-radius: 18px 18px 18px 4px;
+
+  /* Subtle inner glow */
+  box-shadow:
+    inset 0 1px 3px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 2px rgba(200, 180, 220, 0.15);
+
+  /* Typography - Bold and prominent for visibility */
+  font-family: 'Quicksand', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: #1a1528;
+  text-align: center;
+  word-wrap: break-word;
+  letter-spacing: 0.03em;
+
+  /* Text shadow for pop effect */
+  text-shadow:
+    0 1px 2px rgba(255, 255, 255, 0.8),
+    0 0 8px rgba(255, 255, 255, 0.5);
+
+  /* Hide scrollbar */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.speech-bubble-content::-webkit-scrollbar {
+  display: none;
+}
+
+/* Bubble tail with gradient */
+.speech-bubble::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 14px;
+  width: 18px;
+  height: 14px;
+  background: linear-gradient(
+    180deg,
+    var(--aurora-2) 0%,
+    var(--aurora-3) 100%
+  );
+  clip-path: polygon(0 0, 100% 0, 40% 100%);
+  filter: drop-shadow(0 3px 6px rgba(100, 80, 160, 0.3));
+  animation: tail-wiggle 3s ease-in-out infinite;
+}
+
+/* Inner tail overlay for glass effect */
+.speech-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 16px;
+  width: 14px;
+  height: 10px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 245, 255, 0.9) 100%
+  );
+  clip-path: polygon(0 0, 100% 0, 35% 100%);
+}
+
+/* Floating sparkles - multiple decorative elements */
+.speech-sparkle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 25;
+}
+
+.speech-sparkle--1 {
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle,
+    rgba(255, 230, 150, 1) 0%,
+    rgba(255, 200, 100, 0.8) 40%,
+    rgba(255, 180, 80, 0) 70%
+  );
+  animation: sparkle-float 2s ease-in-out infinite;
+}
+
+.speech-sparkle--2 {
+  top: 8px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  background: radial-gradient(circle,
+    rgba(200, 180, 255, 1) 0%,
+    rgba(180, 150, 255, 0) 70%
+  );
+  animation: sparkle-float 2.5s ease-in-out infinite 0.3s;
+}
+
+.speech-sparkle--3 {
+  top: -2px;
+  left: 20%;
+  width: 5px;
+  height: 5px;
+  background: radial-gradient(circle,
+    rgba(150, 220, 255, 1) 0%,
+    rgba(130, 200, 255, 0) 70%
+  );
+  animation: sparkle-float 3s ease-in-out infinite 0.6s;
+}
+
+.speech-sparkle--4 {
+  bottom: 15px;
+  right: -3px;
+  width: 7px;
+  height: 7px;
+  background: radial-gradient(circle,
+    rgba(255, 180, 220, 1) 0%,
+    rgba(255, 150, 200, 0) 70%
+  );
+  animation: sparkle-float 2.2s ease-in-out infinite 0.9s;
+}
+
+/* Star decoration */
+.speech-star {
+  position: absolute;
+  top: -8px;
+  right: 25%;
+  width: 12px;
+  height: 12px;
+  z-index: 25;
+  animation: star-twinkle 1.5s ease-in-out infinite;
+}
+
+.speech-star::before,
+.speech-star::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(135deg, #ffe066 0%, #ffd700 100%);
+}
+
+.speech-star::before {
+  width: 100%;
+  height: 3px;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  border-radius: 2px;
+}
+
+.speech-star::after {
+  width: 3px;
+  height: 100%;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+/* Animations */
+@keyframes bubble-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) translateY(20px) rotate(-5deg);
+  }
+  60% {
+    transform: scale(1.05) translateY(-3px) rotate(1deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes aurora-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-2px) rotate(0.5deg);
+  }
+  66% {
+    transform: translateY(-1px) rotate(-0.3deg);
+  }
+}
+
+@keyframes tail-wiggle {
+  0%, 100% {
+    transform: rotate(0deg) scaleX(1);
+  }
+  25% {
+    transform: rotate(2deg) scaleX(1.02);
+  }
+  75% {
+    transform: rotate(-1deg) scaleX(0.98);
+  }
+}
+
+@keyframes sparkle-float {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.2);
+  }
+}
+
+@keyframes star-twinkle {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(15deg);
+  }
+}
+
+/* Fallback for simple speech bubble (no inner elements) */
+.speech-bubble:not(:has(.speech-bubble-content)) {
+  padding: 12px 16px;
+  max-height: 85px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 240, 255, 0.92) 50%,
+    rgba(255, 245, 250, 0.95) 100%
+  );
+
+  font-family: 'Quicksand', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #3d3655;
+  text-align: left;
+  word-wrap: break-word;
+  letter-spacing: 0.02em;
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.speech-bubble:not(:has(.speech-bubble-content))::-webkit-scrollbar {
+  display: none;
 }
