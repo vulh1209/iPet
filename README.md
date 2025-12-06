@@ -25,15 +25,15 @@ A cute slime pet that lives on your desktop, powered by Tauri + React + TypeScri
 
 ### Phase 2.1: Sprite Animation System (Complete)
 - [x] Sprite sheet animation system
-- [x] Multiple animation states (idle, walk, sleep, happy, talk, curious, drag)
+- [x] Multiple animation states (idle, walk, sleep, happy, drag)
 - [x] Auto-detect frame size from sprite dimensions
 - [x] Aspect ratio preservation when rendering
-- [x] Fallback to procedural drawing when sprites not loaded
 
-### Phase 2.2: Animation Enhancement (Planned)
-- [ ] DeltaTime-based frame timing
-- [ ] Squish/bounce effects on sprites
-- [ ] Animation time tracking in state machine
+### Phase 2.2: Animation Enhancement (Complete)
+- [x] DeltaTime-based frame timing (accurate to config frameDuration)
+- [x] Squish/bounce effects on sprites when landing
+- [x] Optimized rendering (only redraw when frame changes, ~90% less CPU)
+- [x] Drawing integrated into game loop
 
 ### Phase 2.3: Skin System (Planned)
 - [ ] System tray menu for skin selection

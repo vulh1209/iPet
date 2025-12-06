@@ -3,10 +3,77 @@ import { invoke } from '@tauri-apps/api/core';
 import { PetBehavior } from '../../services/PetBehavior';
 import { AnimationType, Direction } from '../../types';
 import { useSprite } from '../../hooks/useSprite';
+import { LoadedSprite } from '../../types/sprite';
 import { getFrameRect, getFrameIndex } from '../../services/SpriteLoader';
 import './Pet.css';
 
 const WINDOW_SIZE = 100;
+
+/**
+ * Draw sprite to canvas with transforms (direction flip, squish effect)
+ * Returns true if drawing was successful
+ */
+function drawSprite(
+  ctx: CanvasRenderingContext2D,
+  sprite: LoadedSprite,
+  animation: AnimationType,
+  direction: Direction,
+  squishFactor: number,
+  frameIndex: number
+): boolean {
+  const animDef = sprite.config.animations[animation];
+  const spriteImage = sprite.images.get(animation);
+
+  if (!animDef || !spriteImage) return false;
+
+  const frameRect = getFrameRect(spriteImage, animDef.frames, frameIndex);
+
+  ctx.clearRect(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+  ctx.save();
+
+  // Apply direction flip
+  if (direction === 'left') {
+    ctx.translate(WINDOW_SIZE, 0);
+    ctx.scale(-1, 1);
+  }
+
+  // Apply squish effect (volume preservation)
+  const centerX = WINDOW_SIZE / 2;
+  const centerY = WINDOW_SIZE / 2;
+  ctx.translate(centerX, centerY);
+  ctx.scale(1 / squishFactor, squishFactor);
+  ctx.translate(-centerX, -centerY);
+
+  // Calculate destination rect with aspect ratio preserved
+  const aspectRatio = frameRect.width / frameRect.height;
+  let destWidth: number;
+  let destHeight: number;
+  let destX: number;
+  let destY: number;
+
+  if (aspectRatio > 1) {
+    // Wider than tall - fit to width
+    destWidth = WINDOW_SIZE;
+    destHeight = WINDOW_SIZE / aspectRatio;
+    destX = 0;
+    destY = (WINDOW_SIZE - destHeight) / 2;
+  } else {
+    // Taller than wide - fit to height
+    destHeight = WINDOW_SIZE;
+    destWidth = WINDOW_SIZE * aspectRatio;
+    destX = (WINDOW_SIZE - destWidth) / 2;
+    destY = 0;
+  }
+
+  ctx.drawImage(
+    spriteImage,
+    frameRect.x, frameRect.y, frameRect.width, frameRect.height,
+    destX, destY, destWidth, destHeight
+  );
+
+  ctx.restore();
+  return true;
+}
 
 export function Pet() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -16,13 +83,19 @@ export function Pet() {
   const animationTimeRef = useRef<number>(0);
   const lastAnimationRef = useRef<AnimationType>('idle');
 
+  // Refs for tracking previous state to optimize redraws
+  const lastFrameRef = useRef<number>(0);
+  const lastDirectionRef = useRef<Direction>('right');
+  const lastSquishRef = useRef<number>(1);
+
   const [, setScreenSize] = useState({ width: 1920, height: 1080 });
   const [isDragging, setIsDragging] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
-  const [animation, setAnimation] = useState<AnimationType>('idle');
-  const [direction, setDirection] = useState<Direction>('right');
-  const [frame, setFrame] = useState(0);
-  const [squishFactor, setSquishFactor] = useState(1.0);
+
+  // State kept for potential UI/debugging use
+  const [, setAnimation] = useState<AnimationType>('idle');
+  const [, setDirection] = useState<Direction>('right');
+  const [, setSquishFactor] = useState(1.0);
 
   // Load sprites
   const { sprite, isLoading: spriteLoading } = useSprite('slime');
@@ -49,10 +122,8 @@ export function Pet() {
     init();
   }, []);
 
-  // Animation loop
+  // Animation loop with integrated drawing
   useEffect(() => {
-    let frameCount = 0;
-
     function gameLoop(timestamp: number) {
       if (!behaviorRef.current) {
         animationFrameRef.current = requestAnimationFrame(gameLoop);
@@ -61,6 +132,10 @@ export function Pet() {
 
       const deltaTime = lastTimeRef.current ? timestamp - lastTimeRef.current : 16;
       lastTimeRef.current = timestamp;
+
+      let currentAnimation: AnimationType = 'idle';
+      let currentDirection: Direction = 'right';
+      let currentSquish = 1.0;
 
       if (!isDragging) {
         const result = behaviorRef.current.update(deltaTime);
@@ -79,22 +154,48 @@ export function Pet() {
           animationTimeRef.current += deltaTime;
         }
 
-        setAnimation(result.animation);
-        setDirection(result.direction);
-        if (result.squishFactor !== undefined) {
-          setSquishFactor(result.squishFactor);
-        } else {
-          setSquishFactor(1.0);
-        }
+        currentAnimation = result.animation;
+        currentDirection = result.direction;
+        currentSquish = result.squishFactor ?? 1.0;
+
+        setAnimation(currentAnimation);
+        setDirection(currentDirection);
+        setSquishFactor(currentSquish);
       } else {
-        // Still update animation time while dragging
+        // While dragging: use drag animation
         animationTimeRef.current += deltaTime;
+        currentAnimation = 'drag';
+        currentDirection = lastDirectionRef.current;
+        currentSquish = 1.0;
       }
 
-      // Update frame for procedural fallback animation
-      frameCount++;
-      if (frameCount % 10 === 0) {
-        setFrame(f => (f + 1) % 4);
+      // Draw sprite if loaded
+      if (sprite && !spriteLoading) {
+        const canvas = canvasRef.current;
+        const ctx = canvas?.getContext('2d');
+
+        if (ctx) {
+          const animDef = sprite.config.animations[currentAnimation];
+          if (animDef) {
+            const newFrame = getFrameIndex(animationTimeRef.current, animDef);
+
+            // Only redraw when state changes (optimized rendering)
+            const needsRedraw =
+              newFrame !== lastFrameRef.current ||
+              currentAnimation !== lastAnimationRef.current ||
+              currentDirection !== lastDirectionRef.current ||
+              currentSquish !== lastSquishRef.current;
+
+            if (needsRedraw) {
+              drawSprite(ctx, sprite, currentAnimation, currentDirection, currentSquish, newFrame);
+
+              // Update tracking refs
+              lastFrameRef.current = newFrame;
+              lastDirectionRef.current = currentDirection;
+              lastSquishRef.current = currentSquish;
+            }
+          }
+        }
       }
 
       animationFrameRef.current = requestAnimationFrame(gameLoop);
@@ -105,79 +206,7 @@ export function Pet() {
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isDragging]);
-
-  // Draw pet on canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, WINDOW_SIZE, WINDOW_SIZE);
-
-    // Try to draw sprite if loaded
-    if (sprite && !spriteLoading) {
-      const animDef = sprite.config.animations[animation];
-      const spriteImage = sprite.images.get(animation);
-
-      if (animDef && spriteImage) {
-        // Calculate current frame
-        const frameIndex = getFrameIndex(animationTimeRef.current, animDef);
-        const frameRect = getFrameRect(spriteImage, animDef.frames, frameIndex);
-
-        ctx.save();
-
-        // Apply direction flip
-        if (direction === 'left') {
-          ctx.translate(WINDOW_SIZE, 0);
-          ctx.scale(-1, 1);
-        }
-
-        // Apply squish effect (volume preservation)
-        const centerX = WINDOW_SIZE / 2;
-        const centerY = WINDOW_SIZE / 2;
-        ctx.translate(centerX, centerY);
-        ctx.scale(1 / squishFactor, squishFactor);
-        ctx.translate(-centerX, -centerY);
-
-        // Draw sprite with correct aspect ratio (fit inside window)
-        const aspectRatio = frameRect.width / frameRect.height;
-        let destWidth: number;
-        let destHeight: number;
-        let destX: number;
-        let destY: number;
-
-        if (aspectRatio > 1) {
-          // Wider than tall - fit to width
-          destWidth = WINDOW_SIZE;
-          destHeight = WINDOW_SIZE / aspectRatio;
-          destX = 0;
-          destY = (WINDOW_SIZE - destHeight) / 2;
-        } else {
-          // Taller than wide - fit to height
-          destHeight = WINDOW_SIZE;
-          destWidth = WINDOW_SIZE * aspectRatio;
-          destX = (WINDOW_SIZE - destWidth) / 2;
-          destY = 0;
-        }
-
-        ctx.drawImage(
-          spriteImage,
-          frameRect.x, frameRect.y, frameRect.width, frameRect.height,
-          destX, destY, destWidth, destHeight
-        );
-
-        ctx.restore();
-        return; // Skip procedural drawing
-      }
-    }
-
-    // Fallback: Draw procedural slime
-    drawProceduralSlime(ctx, animation, direction, frame, squishFactor);
-
-  }, [frame, animation, direction, squishFactor, sprite, spriteLoading]);
+  }, [isDragging, sprite, spriteLoading]);
 
   // Mouse handlers for drag
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -243,142 +272,4 @@ export function Pet() {
       />
     </div>
   );
-}
-
-/**
- * Draw procedural slime as fallback when sprites are not loaded
- */
-function drawProceduralSlime(
-  ctx: CanvasRenderingContext2D,
-  animation: AnimationType,
-  direction: Direction,
-  frame: number,
-  squishFactor: number
-) {
-  const centerX = WINDOW_SIZE / 2;
-  const centerY = WINDOW_SIZE / 2 + 2;
-  const baseRadius = 18;
-
-  // Bounce animation
-  const bounceOffset = Math.sin(frame * 0.5) * 3;
-  const walkSquish = animation === 'walk' ? 0.9 + Math.sin(frame * 0.8) * 0.1 : 1;
-  const squishX = walkSquish / squishFactor;
-  const squishY = walkSquish * squishFactor;
-
-  ctx.save();
-
-  // Flip if facing left
-  if (direction === 'left') {
-    ctx.translate(WINDOW_SIZE, 0);
-    ctx.scale(-1, 1);
-  }
-
-  // Body
-  ctx.beginPath();
-  ctx.ellipse(
-    centerX,
-    centerY - bounceOffset,
-    baseRadius * squishX,
-    baseRadius * squishY,
-    0,
-    0,
-    Math.PI * 2
-  );
-
-  // Gradient for cute look
-  const gradient = ctx.createRadialGradient(
-    centerX - 10,
-    centerY - bounceOffset - 15,
-    5,
-    centerX,
-    centerY - bounceOffset,
-    baseRadius
-  );
-
-  // Color based on animation
-  let mainColor = '#7EC8E3';
-  let lightColor = '#B5E4F7';
-
-  if (animation === 'happy') {
-    mainColor = '#FFB6C1';
-    lightColor = '#FFE4E8';
-  } else if (animation === 'sleep') {
-    mainColor = '#9B8EC8';
-    lightColor = '#C4B8E8';
-  } else if (animation === 'drag') {
-    mainColor = '#98D8AA';
-    lightColor = '#C8F0D4';
-  }
-
-  gradient.addColorStop(0, lightColor);
-  gradient.addColorStop(1, mainColor);
-  ctx.fillStyle = gradient;
-  ctx.fill();
-
-  // Outline
-  ctx.strokeStyle = 'rgba(0,0,0,0.2)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Eyes
-  const eyeY = centerY - bounceOffset - 2;
-  const eyeSpacing = 5;
-  const isBlinking = frame % 20 === 0;
-
-  if (animation === 'sleep' || isBlinking) {
-    ctx.strokeStyle = '#333';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(centerX - eyeSpacing - 2, eyeY);
-    ctx.lineTo(centerX - eyeSpacing + 2, eyeY);
-    ctx.moveTo(centerX + eyeSpacing - 2, eyeY);
-    ctx.lineTo(centerX + eyeSpacing + 2, eyeY);
-    ctx.stroke();
-  } else {
-    ctx.fillStyle = '#333';
-    ctx.beginPath();
-    ctx.ellipse(centerX - eyeSpacing, eyeY, 2, 2.5, 0, 0, Math.PI * 2);
-    ctx.ellipse(centerX + eyeSpacing, eyeY, 2, 2.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.fillStyle = '#fff';
-    ctx.beginPath();
-    ctx.ellipse(centerX - eyeSpacing + 0.5, eyeY - 0.5, 0.8, 0.8, 0, 0, Math.PI * 2);
-    ctx.ellipse(centerX + eyeSpacing + 0.5, eyeY - 0.5, 0.8, 0.8, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  // Mouth
-  const mouthY = centerY - bounceOffset + 5;
-  ctx.strokeStyle = '#333';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-
-  if (animation === 'happy') {
-    ctx.arc(centerX, mouthY - 2, 4, 0.1 * Math.PI, 0.9 * Math.PI);
-  } else if (animation === 'sleep') {
-    ctx.ellipse(centerX, mouthY, 2, 1.5, 0, 0, Math.PI * 2);
-  } else {
-    ctx.arc(centerX, mouthY - 1, 3, 0.1 * Math.PI, 0.9 * Math.PI);
-  }
-  ctx.stroke();
-
-  // Blush
-  ctx.fillStyle = 'rgba(255, 150, 150, 0.4)';
-  ctx.beginPath();
-  ctx.ellipse(centerX - 10, eyeY + 3, 3, 2, 0, 0, Math.PI * 2);
-  ctx.ellipse(centerX + 10, eyeY + 3, 3, 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
-
-  // Sleep Z's
-  if (animation === 'sleep') {
-    ctx.fillStyle = '#666';
-    ctx.font = '8px Arial';
-    const zOffset = (frame % 4) * 2;
-    ctx.fillText('z', centerX + 12, centerY - 15 - zOffset);
-    ctx.font = '6px Arial';
-    ctx.fillText('z', centerX + 16, centerY - 20 - zOffset);
-  }
 }

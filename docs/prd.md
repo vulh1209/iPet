@@ -70,14 +70,23 @@ Pet appears and moves on screen
 - [x] Squish effect (compress/stretch) on landing
 - [x] Smooth settle animation (~600ms)
 
-### Phase 2: Sprite & Animation
-Cute slime with smooth animations
-- [ ] Sprite sheet (Google Imagen 3.0, cartoon style)
-- [ ] AnimationEngine (frame-based)
-- [ ] All animation states
-- [ ] SkinManager
+### Phase 2.1: Sprite Animation System
+- [x] Sprite sheet loading and rendering
+- [x] Multiple animation states (idle, walk, sleep, happy, drag)
+- [x] Auto-detect frame size from sprite dimensions
+- [x] Aspect ratio preservation
+- [x] Direction flip based on movement
+
+### Phase 2.2: Animation Enhancement
+- [x] DeltaTime-based frame timing (accurate to config frameDuration)
+- [x] Squish/bounce effects on sprites when landing
+- [x] Optimized rendering (only redraw when frame changes)
+- [x] Drawing integrated into game loop
+
+### Phase 2.3: Skin System (Planned)
+- [ ] SkinManager with multiple skins
 - [ ] Color variations
-- [ ] Click reaction
+- [ ] System tray skin selection
 
 ### Phase 3: AI Integration
 Pet talks with user via voice
