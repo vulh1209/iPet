@@ -88,15 +88,45 @@ Pet appears and moves on screen
 - [ ] Color variations
 - [ ] System tray skin selection
 
-### Phase 3: AI Integration
-Pet talks with user via voice
-- [ ] AudioService (mic recording)
-- [ ] Double-click → listening
+### Phase 3.1: Settings Infrastructure (Complete)
+- [x] Tauri plugin for file system access
+- [x] Settings storage at ~/.ipet/settings.json
+- [x] Rust commands: load_settings, save_settings
+- [x] TypeScript types and SettingsService
+- [x] useSettings React hook
+
+### Phase 3.2: Settings UI & System Tray (Complete)
+- [x] System tray icon with menu (Settings, Quit)
+- [x] Settings window (secondary Tauri window)
+- [x] Kawaii glassmorphism UI design
+- [x] Dark/light theme support (follows system)
+- [x] Sections: API Key, Personality, Microphone, Storage
+
+### Phase 3.3: Voice Recognition (Planned)
+- [ ] Web Speech API integration
+- [ ] Double-click → listening state
+- [ ] Silence detection (2s timeout)
+- [ ] Visual indicator when listening
+
+### Phase 3.4: Conversation History (Planned)
+- [ ] Conversation storage at ~/.ipet/conversations.json
+- [ ] 30-day retention (configurable)
+- [ ] Auto-cleanup old messages
+
+### Phase 3.5: Gemini AI Integration (Planned)
 - [ ] Gemini API (gemini-2.0-flash)
 - [ ] Personality system prompts
-- [ ] EmojiBubble component
-- [ ] Conversation memory
-- [ ] System Tray + Settings panel
+- [ ] JSON response format (emoji, text, emotion)
+
+### Phase 3.6: Speech Bubble UI (Planned)
+- [ ] Manga-style speech bubble
+- [ ] Expand pet window when showing bubble
+- [ ] Animation triggers based on emotion
+
+### Phase 3.7: Full Integration (Planned)
+- [ ] Complete voice → AI → response flow
+- [ ] Error handling
+- [ ] State machine updates (listening, thinking, speaking)
 
 ### Phase 4: Polish & Distribution
 - [ ] Error handling

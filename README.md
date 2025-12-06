@@ -40,12 +40,23 @@ A cute slime pet that lives on your desktop, powered by Tauri + React + TypeScri
 - [ ] Multiple pet skins
 - [ ] Skin preference persistence
 
-### Phase 3: AI Integration (Planned)
+### Phase 3.1: Settings Infrastructure (Complete)
+- [x] File system storage (~/.ipet/settings.json)
+- [x] Settings types and service layer
+- [x] useSettings React hook
+
+### Phase 3.2: Settings UI & System Tray (Complete)
+- [x] System tray icon with menu
+- [x] Beautiful Settings window (glassmorphism design)
+- [x] Dark/light theme (follows system preference)
+- [x] Personality presets (Bubbles, Sage, Drowsy, Custom)
+- [x] Microphone and storage configuration
+
+### Phase 3.3-3.7: AI Integration (Planned)
 - [ ] Voice input via microphone (double-click to activate)
 - [ ] Gemini AI integration for responses
-- [ ] Personality system
-- [ ] Emoji bubble responses
-- [ ] System tray + settings panel
+- [ ] Conversation history with retention
+- [ ] Speech bubble responses
 
 ### Phase 4: Polish & Distribution (Planned)
 - [ ] Error handling
@@ -87,17 +98,21 @@ npm run tauri build
 ipet/
 ├── src/                    # React frontend
 │   ├── components/
-│   │   └── Pet/           # Pet component
+│   │   ├── Pet/           # Pet component
+│   │   └── Settings/      # Settings panel (glassmorphism UI)
 │   ├── hooks/
-│   │   └── useSprite.ts   # Sprite loading hook
+│   │   ├── useSprite.ts   # Sprite loading hook
+│   │   └── useSettings.ts # Settings management hook
 │   ├── services/
 │   │   ├── PetBehavior.ts # Pet state machine
-│   │   └── SpriteLoader.ts # Sprite loading service
+│   │   ├── SpriteLoader.ts # Sprite loading service
+│   │   └── SettingsService.ts # Settings persistence
 │   └── types/             # TypeScript types
 ├── src-tauri/             # Rust backend
 │   ├── src/
-│   │   └── lib.rs         # Tauri commands
-│   └── tauri.conf.json    # Window config
+│   │   └── lib.rs         # Tauri commands + settings
+│   └── tauri.conf.json    # Window config (main + settings)
+├── settings.html          # Settings window entry
 └── public/
     └── sprites/           # Sprite assets
         └── slime/         # Slime skin sprites

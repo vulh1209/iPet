@@ -26,6 +26,20 @@
         "skipTaskbar": true,
         "visible": true,
         "shadow": false
+      },
+      {
+        "label": "settings",
+        "title": "iPet Settings",
+        "url": "settings.html",
+        "width": 450,
+        "height": 550,
+        "resizable": false,
+        "decorations": true,
+        "transparent": false,
+        "alwaysOnTop": false,
+        "skipTaskbar": false,
+        "visible": false,
+        "center": true
       }
     ],
     "security": {
