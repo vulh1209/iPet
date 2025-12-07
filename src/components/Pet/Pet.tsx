@@ -10,7 +10,6 @@ import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
 import { usePetDrag } from '../../hooks/usePetDrag';
 import { getFrameIndex } from '../../services/SpriteLoader';
 import { drawSprite } from '../../services/SpriteRenderer';
-import { MoodIndicator } from '../MoodIndicator';
 import { EnergyBar } from '../EnergyBar';
 import { HappinessBar } from '../HappinessBar';
 import './Pet.css';
@@ -318,14 +317,6 @@ export function Pet() {
           height={WINDOW_SIZE}
           onMouseDown={handleMouseDown}
           className="pet-canvas"
-        />
-
-        {/* Mood indicator */}
-        <MoodIndicator
-          happiness={happiness}
-          energy={energy}
-          isSleeping={isSleeping}
-          isActive={showMicIndicator}
         />
 
         {/* Happiness bar above energy bar */}
