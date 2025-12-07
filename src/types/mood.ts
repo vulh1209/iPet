@@ -192,7 +192,7 @@ export const INTERACTIONS: Record<string, Interaction> = {
     name: 'Drag',
     happinessChange: -5,     // Increased penalty from -2 → -5
     energyChange: -5,        // Increased penalty from -3 → -5
-    cooldownMs: 1000,        // Added 1s cooldown (prevents rapid drag spam)
+    cooldownMs: 0,           // No cooldown - each drag-drop costs stats
   },
 };
 

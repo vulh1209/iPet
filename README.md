@@ -67,7 +67,7 @@ npm run tauri build
 | Status | Action | Key/Mouse | Effect | Cooldown |
 |--------|--------|-----------|--------|----------|
 | ✅ | **Click** | Left click | Pet jumps happily (+5 😊, +1 ⚡) | 3s |
-| ✅ | **Drag** | Hold & drag | Move pet (-5 😊, -5 ⚡) | 1s |
+| ✅ | **Drag** | Hold & drag | Move pet (-5 😊, -5 ⚡) | - |
 | ✅ | **Voice** | `V` | Talk to pet via AI (+15 😊, -5 ⚡) | 5s |
 | ✅ | **Dance** | `D` | Pet dances with music notes (+15 😊, -15 ⚡) | 60s |
 | ✅ | **Treat** | `T` | Give treat with eating animation (+10 😊, +8 ⚡) | 10s, 10x/day |
