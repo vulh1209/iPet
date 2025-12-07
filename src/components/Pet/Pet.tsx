@@ -6,81 +6,18 @@ import { useSprite } from '../../hooks/useSprite';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { useSettings } from '../../hooks/useSettings';
 import { useMood } from '../../hooks/useMood';
-import { LoadedSprite } from '../../types/sprite';
-import { getFrameRect, getFrameIndex } from '../../services/SpriteLoader';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { usePetDrag } from '../../hooks/usePetDrag';
+import { getFrameIndex } from '../../services/SpriteLoader';
+import { drawSprite } from '../../services/SpriteRenderer';
 import { MoodIndicator } from '../MoodIndicator';
 import { EnergyBar } from '../EnergyBar';
 import { HappinessBar } from '../HappinessBar';
+import { SpeechBubble } from './SpeechBubble';
 import './Pet.css';
 
 const WINDOW_SIZE = 100;
 const EXPANDED_HEIGHT = 220; // Extra height for speech bubble with decorations
-
-/**
- * Draw sprite to canvas with transforms (direction flip, squish effect)
- * Returns true if drawing was successful
- */
-function drawSprite(
-  ctx: CanvasRenderingContext2D,
-  sprite: LoadedSprite,
-  animation: AnimationType,
-  direction: Direction,
-  squishFactor: number,
-  frameIndex: number
-): boolean {
-  const animDef = sprite.config.animations[animation];
-  const spriteImage = sprite.images.get(animation);
-
-  if (!animDef || !spriteImage) return false;
-
-  const frameRect = getFrameRect(spriteImage, animDef.frames, frameIndex);
-
-  ctx.clearRect(0, 0, WINDOW_SIZE, WINDOW_SIZE);
-  ctx.save();
-
-  // Apply direction flip
-  if (direction === 'left') {
-    ctx.translate(WINDOW_SIZE, 0);
-    ctx.scale(-1, 1);
-  }
-
-  // Apply squish effect (volume preservation)
-  const centerX = WINDOW_SIZE / 2;
-  const centerY = WINDOW_SIZE / 2;
-  ctx.translate(centerX, centerY);
-  ctx.scale(1 / squishFactor, squishFactor);
-  ctx.translate(-centerX, -centerY);
-
-  // Calculate destination rect with aspect ratio preserved
-  const aspectRatio = frameRect.width / frameRect.height;
-  let destWidth: number;
-  let destHeight: number;
-  let destX: number;
-  let destY: number;
-
-  if (aspectRatio > 1) {
-    // Wider than tall - fit to width
-    destWidth = WINDOW_SIZE;
-    destHeight = WINDOW_SIZE / aspectRatio;
-    destX = 0;
-    destY = (WINDOW_SIZE - destHeight) / 2;
-  } else {
-    // Taller than wide - fit to height
-    destHeight = WINDOW_SIZE;
-    destWidth = WINDOW_SIZE * aspectRatio;
-    destX = (WINDOW_SIZE - destWidth) / 2;
-    destY = 0;
-  }
-
-  ctx.drawImage(
-    spriteImage,
-    frameRect.x, frameRect.y, frameRect.width, frameRect.height,
-    destX, destY, destWidth, destHeight
-  );
-
-  ctx.restore();
-  return true;
-}
 
 export function Pet() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -95,8 +32,6 @@ export function Pet() {
   const lastDirectionRef = useRef<Direction>('right');
   const lastSquishRef = useRef<number>(1);
 
-  const [isDragging, setIsDragging] = useState(false);
-  const dragOffsetRef = useRef({ x: 0, y: 0 });
   const [isRejecting, setIsRejecting] = useState(false);
 
   // Load sprites
@@ -124,7 +59,23 @@ export function Pet() {
     stopListening,
   } = useVoiceInput();
 
-  // Right-click for voice input (double-click conflicts with app close)
+  // Drag behavior (extracted hook)
+  const { isDragging, handleMouseDown } = usePetDrag({
+    behaviorRef,
+    triggerInteraction,
+    forceWakeUp,
+  });
+
+  // Keyboard shortcuts (extracted hook)
+  useKeyboardShortcuts({
+    behaviorRef,
+    isSleeping,
+    triggerInteraction,
+    micEnabled: settings.microphone.enabled,
+    isListening,
+    isProcessing,
+    startListening,
+  });
 
   // Initialize
   useEffect(() => {
@@ -208,7 +159,7 @@ export function Pet() {
               currentSquish !== lastSquishRef.current;
 
             if (needsRedraw) {
-              drawSprite(ctx, sprite, currentAnimation, currentDirection, currentSquish, newFrame);
+              drawSprite(ctx, sprite, currentAnimation, currentDirection, currentSquish, newFrame, WINDOW_SIZE);
 
               // Update tracking refs
               lastFrameRef.current = newFrame;
@@ -229,44 +180,6 @@ export function Pet() {
     };
   }, [isDragging, sprite, spriteLoading]);
 
-  // Mouse handlers for drag
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-    dragOffsetRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-    };
-    behaviorRef.current?.onDragStart();
-    // Wake up pet if sleeping when dragged
-    forceWakeUp();
-  }, [forceWakeUp]);
-
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging) return;
-
-    const newX = e.screenX - dragOffsetRef.current.x;
-    const newY = e.screenY - dragOffsetRef.current.y;
-
-    invoke('set_window_position', {
-      x: Math.round(newX),
-      y: Math.round(newY),
-    });
-  }, [isDragging]);
-
-  const handleMouseUp = useCallback((e: MouseEvent) => {
-    if (isDragging) {
-      setIsDragging(false);
-      const newPosition = {
-        x: e.screenX - dragOffsetRef.current.x,
-        y: e.screenY - dragOffsetRef.current.y,
-      };
-      behaviorRef.current?.onDragEnd(newPosition);
-      // Dragging costs energy
-      triggerInteraction('drag');
-    }
-  }, [isDragging, triggerInteraction]);
-
   // Click = pet react + mood interaction
   const handleClick = useCallback(() => {
     if (isDragging) return;
@@ -280,87 +193,6 @@ export function Pet() {
     triggerInteraction('pet');
     behaviorRef.current?.onClick();
   }, [isDragging, canTriggerMorningGreeting, triggerInteraction]);
-
-  // Keyboard shortcuts for interactions
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if sleeping (except for some interactions)
-      const key = e.key.toLowerCase();
-
-      // Press "V" to start voice input
-      if (key === 'v') {
-        if (settings.microphone.enabled && !isListening && !isProcessing && !isSleeping) {
-          e.preventDefault();
-          startListening();
-          behaviorRef.current?.onListeningStart();
-        }
-      }
-
-      // Press "T" to give treat
-      if (key === 't' && !isSleeping) {
-        e.preventDefault();
-        if (triggerInteraction('treat')) {
-          behaviorRef.current?.onEat(); // Show eating animation
-        } else {
-          behaviorRef.current?.onReject(); // Show rejection (cooldown/limit)
-        }
-      }
-
-      // Press "D" for dance party
-      if (key === 'd' && !isSleeping) {
-        e.preventDefault();
-        if (triggerInteraction('danceParty')) {
-          behaviorRef.current?.onDance(); // Show dancing animation
-        } else {
-          behaviorRef.current?.onReject(); // Show rejection (cooldown/low energy)
-        }
-      }
-
-      // Press "L" for lullaby (puts pet to sleep)
-      if (key === 'l' && !isSleeping) {
-        e.preventDefault();
-        if (!triggerInteraction('lullaby')) {
-          behaviorRef.current?.onReject(); // Show rejection (cooldown)
-        }
-      }
-
-      // Press "C" for play catch
-      if (key === 'c' && !isSleeping) {
-        e.preventDefault();
-        if (triggerInteraction('playCatch')) {
-          behaviorRef.current?.onPlay();
-        } else {
-          behaviorRef.current?.onReject();
-        }
-      }
-
-      // Press "S" for gentle shake
-      if (key === 's' && !isSleeping) {
-        e.preventDefault();
-        if (triggerInteraction('shake')) {
-          behaviorRef.current?.onShake();
-        } else {
-          behaviorRef.current?.onReject();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [settings.microphone.enabled, isListening, isProcessing, isSleeping, startListening, triggerInteraction]);
-
-  // Global mouse event listeners for drag
-  useEffect(() => {
-    if (isDragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDragging, handleMouseMove, handleMouseUp]);
 
   // Handle voice input state changes
   useEffect(() => {
@@ -423,19 +255,7 @@ export function Pet() {
     <div className="pet-container" onClick={handleClick}>
       {/* Speech bubble for transcript/response - above pet */}
       {showSpeechBubble && (
-        <div className="speech-bubble">
-          {/* Floating sparkle decorations */}
-          <span className="speech-sparkle speech-sparkle--1" />
-          <span className="speech-sparkle speech-sparkle--2" />
-          <span className="speech-sparkle speech-sparkle--3" />
-          <span className="speech-sparkle speech-sparkle--4" />
-          <span className="speech-star" />
-
-          {/* Glass content area */}
-          <div className="speech-bubble-content">
-            {response?.text || transcript}
-          </div>
-        </div>
+        <SpeechBubble text={response?.text || transcript || ''} />
       )}
 
       {/* Pet canvas - at bottom */}
