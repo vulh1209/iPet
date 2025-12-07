@@ -35,14 +35,24 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 - [x] Configurable API key
 - [x] Toggle energy bar & happiness bar visibility
 
-## Quick Start
+## Installation
 
-### Prerequisites
+### Download (Recommended)
+
+1. Download the latest `iPet_x.x.x_universal.dmg` from [Releases](../../releases)
+2. Open the DMG and drag **iPet** to your **Applications** folder
+3. **First launch only**: Right-click iPet → Open → Open
+   > This is required once because the app is not notarized (no $99 Apple Developer fee)
+4. Grant microphone permission when prompted (for voice chat)
+
+### Build from Source
+
+#### Prerequisites
 - Node.js 18+
 - Rust
 - macOS 10.15+
 
-### Setup
+#### Setup
 ```bash
 # Install dependencies
 npm install
@@ -52,6 +62,9 @@ npm run tauri dev
 
 # Build for production
 npm run tauri build
+
+# Build universal binary (Intel + Apple Silicon)
+./scripts/build-release.sh
 ```
 
 ### Configuration
@@ -188,7 +201,8 @@ ipet/
 - [ ] Multiple pet skins
 
 ### Planned
-- [ ] macOS code signing
+- [x] macOS distribution (GitHub Releases + CI/CD)
+- [ ] macOS code signing (requires $99/year Apple Developer account)
 - [ ] Windows/Linux support
 
 ### Future Vision: Tiny Assistant 🤖
