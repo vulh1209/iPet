@@ -83,6 +83,8 @@ export function useVoiceInput(): UseVoiceInputReturn {
       const geminiResponse = await geminiService.chat(text);
 
       if (geminiResponse.error) {
+        // Clear transcript when API error occurs to hide speech bubble
+        setTranscript('');
         setErrorWithTimeout({
           type: 'api',
           message: geminiResponse.error,
@@ -133,6 +135,9 @@ export function useVoiceInput(): UseVoiceInputReturn {
     }
     // Only set to idle if still listening (not processing or error)
     if (stateRef.current === 'listening') {
+      // Clear transcript if recognition ended without processing
+      // (e.g., user didn't say anything or recognition timed out)
+      setTranscript('');
       setState('idle');
     }
   }, []);

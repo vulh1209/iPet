@@ -1,6 +1,6 @@
 [package]
 name = "ipet"
-version = "0.1.0"
+version = "0.2.1"
 description = "A cute desktop pet for macOS"
 authors = ["vule"]
 edition = "2021"

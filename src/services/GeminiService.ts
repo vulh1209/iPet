@@ -12,8 +12,8 @@ export interface GeminiResponse {
   error?: string;
 }
 
-// Use Gemini 2.0 Flash - fast and capable model
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent';
+// Use Gemini 2.5 Flash Lite - fastest and cheapest model
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
 
 /**
  * Service for interacting with Google Gemini API
