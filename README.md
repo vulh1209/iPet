@@ -8,7 +8,7 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 
 ### Desktop Pet
 - [x] Transparent window always on top
-- [x] Multiple animations (idle, walk, happy, sleep, drag, curious, reject)
+- [x] 19 animations with mood-based variations
 - [x] Spring physics bounce when dropped
 - [x] Random wandering movement
 - [x] Click reactions
@@ -16,9 +16,10 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 ### Mood System
 - [x] Two core stats: Happiness (0-100) and Energy (0-100)
 - [x] Time-based decay with random delays
-- [x] Sleep/wake cycles (pet gets tired and naps!)
+- [x] Sleep/wake cycles with yawn/wake transitions
 - [x] Visual mood indicator bars
-- [x] Energy bar below pet (toggleable in Settings)
+- [x] Happiness bar + Energy bar below pet (toggleable in Settings)
+- [x] Mood-based idle animations (ecstatic, happy, sad, angry)
 - [x] 10 creative interactions with cooldowns
 
 ### Voice Interaction
@@ -32,7 +33,7 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 - [x] Personality presets (Bubbles, Sage, Drowsy, Custom)
 - [x] Dark/light theme support
 - [x] Configurable API key
-- [x] Toggle energy bar visibility
+- [x] Toggle energy bar & happiness bar visibility
 
 ## Quick Start
 
@@ -65,17 +66,12 @@ npm run tauri build
 
 | Status | Action | Key/Mouse | Effect | Cooldown |
 |--------|--------|-----------|--------|----------|
-| ✅ | **Click** | Left click | Pet jumps happily | - |
+| ✅ | **Click** | Left click | Pet jumps happily (+5 😊) | - |
 | ✅ | **Drag** | Hold & drag | Move pet anywhere (wakes up if sleeping) | - |
-| ✅ | **Voice** | `V` | Talk to pet via AI | - |
-| ✅ | **Dance** | `D` | Pet dances (+15 😊, -15 ⚡) | 30s |
-| ✅ | **Treat** | `T` | Give treat (+8 😊, +10 ⚡) | 5x/day |
-| ✅ | **Lullaby** | `L` | Sing pet to sleep | - |
-| ⬚ | **Tickle** | `K` | Tickle pet (+5 😊, -3 ⚡) | 10s |
-| ⬚ | **Story** | `S` | Tell a story (+12 😊, -8 ⚡) | 60s |
-| ⬚ | **Play** | `P` | Play together (+10 😊, -12 ⚡) | 20s |
-| ⬚ | **Meditate** | `M` | Meditate (+5 😊, +15 ⚡) | 45s |
-| ⬚ | **Compliment** | `C` | Give compliment (+8 😊) | 15s |
+| ✅ | **Voice** | `V` | Talk to pet via AI (+8 😊) | - |
+| ✅ | **Dance** | `D` | Pet dances with music notes (+15 😊, -15 ⚡) | 60s |
+| ✅ | **Treat** | `T` | Give treat with eating animation (+8 😊, +10 ⚡) | 5x/day |
+| ✅ | **Lullaby** | `L` | Sing pet to sleep (yawn → sleep) | - |
 
 ### Mood System
 
@@ -83,13 +79,15 @@ Your pet has 2 core stats:
 - **😊 Happiness (0-100)**: Joy level - decays over time
 - **⚡ Energy (0-100)**: Stamina - decreases with activities, recovers while sleeping
 
-**Pet Behavior States:**
-| Happiness | Energy | Behavior |
-|-----------|--------|----------|
-| > 70 | > 50 | Happy, playful, bouncy |
-| 30-70 | > 30 | Normal |
-| < 30 | any | Sad, moves less |
-| any | < 20 | Auto-sleeps 💤 |
+**Pet Behavior & Animations:**
+| Happiness | Energy | Idle Animation |
+|-----------|--------|----------------|
+| 80+ | any | Ecstatic (sparkles) |
+| 60-79 | any | Happy (smiling) |
+| 40-59 | any | Normal |
+| < 40 | any | Sad |
+| any | < 20 | Angry (exhausted) |
+| any | auto-sleep | Yawn → Sleep → Wake |
 
 ### Voice Chat
 
@@ -130,7 +128,8 @@ ipet/
 ├── src/                      # React frontend
 │   ├── components/
 │   │   ├── Pet/              # Pet component + animations
-│   │   ├── EnergyBar/        # Energy bar below pet
+│   │   ├── EnergyBar/        # Energy bar UI
+│   │   ├── HappinessBar/     # Happiness bar UI
 │   │   └── Settings/         # Settings UI (glassmorphism)
 │   ├── hooks/
 │   │   ├── useSprite.ts      # Sprite loading
@@ -151,15 +150,17 @@ ipet/
 ## Roadmap
 
 ### Completed
-- [x] Desktop pet with animations
+- [x] Desktop pet with 19 animations
 - [x] Voice input + Gemini AI
 - [x] Settings system
 - [x] Glassmorphism speech bubble
 - [x] Pet mood system (happiness, energy, sleep cycles)
 - [x] Interaction cooldowns with rejection feedback
+- [x] Mood-based idle animations (ecstatic, happy, sad, angry)
+- [x] Interaction animations (eat, dance, yawn, wake, talk)
+- [x] Happiness & Energy bar UI
 
 ### In Progress
-- [ ] Additional keyboard interactions (K, S, P, M, C)
 - [ ] Multiple pet skins
 
 ### Planned

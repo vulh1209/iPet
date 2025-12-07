@@ -30,9 +30,15 @@ pub struct AppSettings {
     pub conversation_retention_days: u32,
     #[serde(default = "default_show_energy_bar")]
     pub show_energy_bar: bool,
+    #[serde(default = "default_show_happiness_bar")]
+    pub show_happiness_bar: bool,
 }
 
 fn default_show_energy_bar() -> bool {
+    true
+}
+
+fn default_show_happiness_bar() -> bool {
     true
 }
 
@@ -51,6 +57,7 @@ impl Default for AppSettings {
             },
             conversation_retention_days: 30,
             show_energy_bar: true,
+            show_happiness_bar: true,
         }
     }
 }

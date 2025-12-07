@@ -249,10 +249,10 @@ export class MoodService {
 
   private startSleep(): void {
     const now = Date.now();
-    const sleepDuration = randomInRange(
+    const sleepDuration = Math.floor(randomInRange(
       SLEEP_CONSTANTS.SLEEP_DURATION_MIN,
       SLEEP_CONSTANTS.SLEEP_DURATION_MAX
-    );
+    ));
 
     this.moodState.sleep = {
       isSleeping: true,
@@ -272,9 +272,10 @@ export class MoodService {
       isSleeping: false,
       sleepStartTime: null,
       scheduledWakeTime: null,
-      nextSleepTime:
+      nextSleepTime: Math.floor(
         now +
-        randomInRange(SLEEP_CONSTANTS.AWAKE_DURATION_MIN, SLEEP_CONSTANTS.AWAKE_DURATION_MAX),
+        randomInRange(SLEEP_CONSTANTS.AWAKE_DURATION_MIN, SLEEP_CONSTANTS.AWAKE_DURATION_MAX)
+      ),
     };
     this.moodState.timestamps.lastSleepEnd = now;
 

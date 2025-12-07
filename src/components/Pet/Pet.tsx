@@ -10,6 +10,7 @@ import { LoadedSprite } from '../../types/sprite';
 import { getFrameRect, getFrameIndex } from '../../services/SpriteLoader';
 import { MoodIndicator } from '../MoodIndicator';
 import { EnergyBar } from '../EnergyBar';
+import { HappinessBar } from '../HappinessBar';
 import './Pet.css';
 
 const WINDOW_SIZE = 100;
@@ -273,8 +274,10 @@ export function Pet() {
         y: e.screenY - dragOffsetRef.current.y,
       };
       behaviorRef.current?.onDragEnd(newPosition);
+      // Dragging costs energy
+      triggerInteraction('drag');
     }
-  }, [isDragging]);
+  }, [isDragging, triggerInteraction]);
 
   // Click = pet react + mood interaction
   const handleClick = useCallback(() => {
@@ -309,7 +312,7 @@ export function Pet() {
       if (key === 't' && !isSleeping) {
         e.preventDefault();
         if (triggerInteraction('treat')) {
-          behaviorRef.current?.onClick(); // Show happy reaction
+          behaviorRef.current?.onEat(); // Show eating animation
         } else {
           behaviorRef.current?.onReject(); // Show rejection (cooldown/limit)
         }
@@ -319,7 +322,7 @@ export function Pet() {
       if (key === 'd' && !isSleeping) {
         e.preventDefault();
         if (triggerInteraction('danceParty')) {
-          behaviorRef.current?.onClick(); // Show happy reaction
+          behaviorRef.current?.onDance(); // Show dancing animation
         } else {
           behaviorRef.current?.onReject(); // Show rejection (cooldown/low energy)
         }
@@ -359,15 +362,18 @@ export function Pet() {
     }
   }, [isListening, isProcessing]);
 
-  // Sync mood sleeping state with behavior
+  // Sync mood state with behavior for mood-based animations
   useEffect(() => {
     behaviorRef.current?.setMoodSleeping(isSleeping);
-  }, [isSleeping]);
+    behaviorRef.current?.setHappiness(happiness);
+    behaviorRef.current?.setEnergy(energy);
+  }, [isSleeping, happiness, energy]);
 
-  // Trigger voice chat interaction when we get a response
+  // Trigger voice chat interaction and talk animation when we get a response
   useEffect(() => {
     if (response?.text) {
       triggerInteraction('voiceChat');
+      behaviorRef.current?.onTalkStart(); // Show talk animation
 
       // Check for compliment in the transcript
       const lowerTranscript = (transcript || '').toLowerCase();
@@ -376,6 +382,9 @@ export function Pet() {
       if (hasCompliment) {
         triggerInteraction('compliment');
       }
+    } else {
+      // End talk animation when response clears
+      behaviorRef.current?.onTalkEnd();
     }
   }, [response, transcript, triggerInteraction]);
 
@@ -437,6 +446,13 @@ export function Pet() {
           energy={energy}
           isSleeping={isSleeping}
           isActive={showMicIndicator}
+        />
+
+        {/* Happiness bar above energy bar */}
+        <HappinessBar
+          happiness={happiness}
+          isVisible={settings.show_happiness_bar ?? true}
+          isSleeping={isSleeping}
         />
 
         {/* Energy bar below pet */}

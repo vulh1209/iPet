@@ -208,6 +208,17 @@ export function Settings() {
                 <span className="toggle-track"></span>
               </label>
             </div>
+            <div className="setting-row">
+              <span className="row-label">Show Happiness Bar</span>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={formData.show_happiness_bar}
+                  onChange={(e) => handleChange('show_happiness_bar', e.target.checked)}
+                />
+                <span className="toggle-track"></span>
+              </label>
+            </div>
           </div>
         </div>
 

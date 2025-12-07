@@ -181,6 +181,13 @@ export const INTERACTIONS: Record<string, Interaction> = {
     energyChange: 5,
     cooldownMs: 5 * 60 * 1000, // 5 minutes
   },
+  drag: {
+    id: 'drag',
+    name: 'Drag',
+    happinessChange: -2,
+    energyChange: -3,
+    cooldownMs: 0, // No cooldown - each drag costs energy
+  },
 };
 
 // Helper to get random value in range
@@ -206,10 +213,10 @@ export function createDefaultMoodState(): PetMoodState {
       isSleeping: false,
       sleepStartTime: null,
       scheduledWakeTime: null,
-      nextSleepTime: now + randomInRange(
+      nextSleepTime: Math.floor(now + randomInRange(
         SLEEP_CONSTANTS.AWAKE_DURATION_MIN,
         SLEEP_CONSTANTS.AWAKE_DURATION_MAX
-      ),
+      )),
     },
     interactionCounts: {
       todayDate: new Date().toISOString().split('T')[0],

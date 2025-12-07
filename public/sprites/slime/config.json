@@ -8,10 +8,40 @@
       "frameDuration": 200,
       "loop": true
     },
+    "idle_happy": {
+      "file": "idle_happy.png",
+      "frames": 4,
+      "frameDuration": 180,
+      "loop": true
+    },
+    "idle_ecstatic": {
+      "file": "idle_ecstatic.png",
+      "frames": 4,
+      "frameDuration": 150,
+      "loop": true
+    },
+    "idle_blink": {
+      "file": "idle_blink.png",
+      "frames": 3,
+      "frameDuration": 80,
+      "loop": false
+    },
+    "idle_look": {
+      "file": "idle_look.png",
+      "frames": 4,
+      "frameDuration": 300,
+      "loop": false
+    },
     "walk": {
       "file": "walk.png",
       "frames": 4,
       "frameDuration": 150,
+      "loop": true
+    },
+    "walk_tired": {
+      "file": "walk_tired.png",
+      "frames": 4,
+      "frameDuration": 200,
       "loop": true
     },
     "sleep": {
@@ -48,6 +78,42 @@
       "file": "reject.png",
       "frames": 4,
       "frameDuration": 150,
+      "loop": false
+    },
+    "angry": {
+      "file": "angry.png",
+      "frames": 4,
+      "frameDuration": 250,
+      "loop": true
+    },
+    "sad": {
+      "file": "sad.png",
+      "frames": 4,
+      "frameDuration": 300,
+      "loop": true
+    },
+    "eat": {
+      "file": "eat.png",
+      "frames": 6,
+      "frameDuration": 150,
+      "loop": false
+    },
+    "dance": {
+      "file": "dance.png",
+      "frames": 7,
+      "frameDuration": 120,
+      "loop": true
+    },
+    "yawn": {
+      "file": "yawn.png",
+      "frames": 4,
+      "frameDuration": 250,
+      "loop": false
+    },
+    "wake": {
+      "file": "wake.png",
+      "frames": 4,
+      "frameDuration": 200,
       "loop": false
     }
   }

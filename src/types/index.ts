@@ -10,13 +10,24 @@ export interface ScreenBounds {
 
 export type AnimationType =
   | 'idle'
+  | 'idle_happy'
+  | 'idle_ecstatic'
+  | 'idle_blink'
+  | 'idle_look'
   | 'walk'
+  | 'walk_tired'
   | 'sleep'
   | 'happy'
   | 'talk'
   | 'curious'
   | 'drag'
-  | 'reject';
+  | 'reject'
+  | 'angry'
+  | 'sad'
+  | 'eat'
+  | 'dance'
+  | 'yawn'
+  | 'wake';
 
 export type Direction = 'left' | 'right';
 

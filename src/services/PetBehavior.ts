@@ -1,6 +1,19 @@
 import { Position, AnimationType, Direction, ScreenBounds } from '../types';
 
-type BehaviorState = 'idle' | 'wandering' | 'sleeping' | 'being_dragged' | 'reacting' | 'landing' | 'listening' | 'rejecting';
+type BehaviorState =
+  | 'idle'
+  | 'wandering'
+  | 'sleeping'
+  | 'being_dragged'
+  | 'reacting'
+  | 'landing'
+  | 'listening'
+  | 'rejecting'
+  | 'talking'      // When AI is responding
+  | 'eating'       // When eating treat
+  | 'dancing'      // When dance party
+  | 'yawning'      // Pre-sleep transition
+  | 'waking';      // Post-sleep transition
 
 interface BehaviorResult {
   position: Position;
@@ -18,6 +31,9 @@ export class PetBehavior {
   private screenBounds: ScreenBounds;
   private direction: Direction = 'right';
   private isMoodSleeping: boolean = false; // Controlled by mood system
+  private isLowEnergy: boolean = false; // Energy < 20
+  private isLowHappiness: boolean = false; // Happiness < 40
+  private happiness: number = 50; // Current happiness level for mood-based animations
 
   private readonly WANDER_SPEED = 30; // pixels per second
   private readonly PET_SIZE = 50;
@@ -33,6 +49,13 @@ export class PetBehavior {
   // Rejection shake physics
   private rejectShakeTime: number = 0;
   private readonly REJECT_DURATION = 600; // ms
+
+  // Animation durations for timed states
+  private readonly TALK_DURATION = 2000; // ms - talk animation while AI responds
+  private readonly EAT_DURATION = 2000; // ms - eating animation (~2 loops)
+  private readonly DANCE_DURATION = 6000; // ms - dance party duration (~7 loops)
+  private readonly YAWN_DURATION = 1000; // ms - 4 frames * 250ms
+  private readonly WAKE_DURATION = 800; // ms - 4 frames * 200ms
 
   private readonly SPRING_STIFFNESS = 150;   // Slower oscillation
   private readonly SPRING_DAMPING = 5;       // Less damping = more bounces
@@ -72,16 +95,26 @@ export class PetBehavior {
         return this.handleListeningState();
       case 'rejecting':
         return this.handleRejectingState(deltaTime);
+      case 'talking':
+        return this.handleTalkingState();
+      case 'eating':
+        return this.handleEatingState();
+      case 'dancing':
+        return this.handleDancingState();
+      case 'yawning':
+        return this.handleYawningState();
+      case 'waking':
+        return this.handleWakingState();
       default:
         return this.handleIdleState();
     }
   }
 
   private handleIdleState(): BehaviorResult {
-    // If mood system says sleeping, transition to sleep
+    // If mood system says sleeping, transition to yawning first
     if (this.isMoodSleeping) {
-      this.transitionTo('sleeping');
-      return this.handleSleepingState();
+      this.transitionTo('yawning');
+      return this.handleYawningState();
     }
 
     const idleDuration = this.randomInRange(this.IDLE_MIN, this.IDLE_MAX);
@@ -99,9 +132,21 @@ export class PetBehavior {
 
     return {
       position: this.position,
-      animation: 'idle',
+      animation: this.selectIdleAnimation(),
       direction: this.direction,
     };
+  }
+
+  /**
+   * Select the appropriate idle animation based on mood levels
+   * Priority: angry (low energy) > sad (low happiness) > ecstatic > happy > idle
+   */
+  private selectIdleAnimation(): AnimationType {
+    if (this.isLowEnergy) return 'angry';
+    if (this.isLowHappiness) return 'sad';
+    if (this.happiness >= 80) return 'idle_ecstatic';
+    if (this.happiness >= 60) return 'idle_happy';
+    return 'idle';
   }
 
   private handleWanderingState(deltaTime: number): BehaviorResult {
@@ -203,6 +248,77 @@ export class PetBehavior {
       animation: 'reject',
       direction: this.direction,
       isRejecting: true,
+    };
+  }
+
+  private handleTalkingState(): BehaviorResult {
+    // Talking animation plays while AI is responding
+    // Duration controlled externally via onTalkEnd()
+    if (this.stateTimer > this.TALK_DURATION) {
+      this.transitionTo('idle');
+      return this.handleIdleState();
+    }
+
+    return {
+      position: this.position,
+      animation: 'talk',
+      direction: this.direction,
+    };
+  }
+
+  private handleEatingState(): BehaviorResult {
+    // Eating animation plays once then returns to happy
+    if (this.stateTimer > this.EAT_DURATION) {
+      this.transitionTo('reacting'); // Show happy after eating
+      return this.handleReactingState();
+    }
+
+    return {
+      position: this.position,
+      animation: 'eat',
+      direction: this.direction,
+    };
+  }
+
+  private handleDancingState(): BehaviorResult {
+    // Dancing animation loops for duration
+    if (this.stateTimer > this.DANCE_DURATION) {
+      this.transitionTo('reacting'); // Show happy after dancing
+      return this.handleReactingState();
+    }
+
+    return {
+      position: this.position,
+      animation: 'dance',
+      direction: this.direction,
+    };
+  }
+
+  private handleYawningState(): BehaviorResult {
+    // Yawn animation before sleep
+    if (this.stateTimer > this.YAWN_DURATION) {
+      this.transitionTo('sleeping');
+      return this.handleSleepingState();
+    }
+
+    return {
+      position: this.position,
+      animation: 'yawn',
+      direction: this.direction,
+    };
+  }
+
+  private handleWakingState(): BehaviorResult {
+    // Wake animation after sleep
+    if (this.stateTimer > this.WAKE_DURATION) {
+      this.transitionTo('idle');
+      return this.handleIdleState();
+    }
+
+    return {
+      position: this.position,
+      animation: 'wake',
+      direction: this.direction,
     };
   }
 
@@ -340,13 +456,59 @@ export class PetBehavior {
   setMoodSleeping(sleeping: boolean): void {
     this.isMoodSleeping = sleeping;
     if (sleeping && this.currentState !== 'being_dragged') {
-      this.transitionTo('sleeping');
+      // Don't interrupt yawning - it will transition to sleeping automatically
+      if (this.currentState !== 'yawning') {
+        this.transitionTo('yawning'); // Play yawn before sleep
+      }
     } else if (!sleeping && this.currentState === 'sleeping') {
-      this.transitionTo('idle');
+      this.transitionTo('waking'); // Play wake animation after sleep
     }
   }
 
   isSleeping(): boolean {
     return this.currentState === 'sleeping';
+  }
+
+  // Low energy state (energy < 20)
+  setLowEnergy(isLow: boolean): void {
+    this.isLowEnergy = isLow;
+  }
+
+  // Set happiness level for mood-based idle animations
+  setHappiness(value: number): void {
+    this.happiness = value;
+    this.isLowHappiness = value < 40;
+  }
+
+  // Set energy level
+  setEnergy(value: number): void {
+    this.isLowEnergy = value < 20;
+  }
+
+  // Trigger eating animation
+  onEat(): void {
+    if (this.currentState === 'idle' || this.currentState === 'wandering' || this.currentState === 'landing' || this.currentState === 'reacting') {
+      this.transitionTo('eating');
+    }
+  }
+
+  // Trigger dancing animation
+  onDance(): void {
+    if (this.currentState === 'idle' || this.currentState === 'wandering' || this.currentState === 'landing' || this.currentState === 'reacting') {
+      this.transitionTo('dancing');
+    }
+  }
+
+  // Trigger talking animation (when AI responds)
+  onTalkStart(): void {
+    if (this.currentState === 'listening') {
+      this.transitionTo('talking');
+    }
+  }
+
+  onTalkEnd(): void {
+    if (this.currentState === 'talking') {
+      this.transitionTo('idle');
+    }
   }
 }
