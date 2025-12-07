@@ -93,8 +93,13 @@ export function Pet() {
           { width: 1920 - WINDOW_SIZE, height: 1080 - WINDOW_SIZE }
         );
       }
+      // Sync mood state immediately after creation
+      behaviorRef.current?.setMoodSleeping(isSleeping);
+      behaviorRef.current?.setHappiness(happiness);
+      behaviorRef.current?.setEnergy(energy);
     }
     init();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Animation loop with integrated drawing

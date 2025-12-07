@@ -27,6 +27,11 @@ export function useKeyboardShortcuts({
 }: KeyboardShortcutsConfig): void {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if any modifier key is pressed (allow system shortcuts like Cmd+C)
+      if (e.metaKey || e.ctrlKey || e.altKey) {
+        return;
+      }
+
       const key = e.key.toLowerCase();
 
       // Press "V" to start voice input

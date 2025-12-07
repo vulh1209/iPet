@@ -61,7 +61,7 @@ export class PetBehavior {
   private readonly WANDER_DISTANCE_MIN = 80; // Base walk distance min
   private readonly WANDER_DISTANCE_MAX = 150; // Base walk distance max
   private readonly RUN_DISTANCE_MULTIPLIER = 3.0; // Run = 3x walk distance
-  private readonly TIRED_DISTANCE_MULTIPLIER = 0.5; // Tired = 0.5x walk distance
+  private readonly TIRED_DISTANCE_MULTIPLIER = 0.6; // Tired = 0.5x walk distance
 
   // Track current energy level for tired animations
   private energy: number = 50;
@@ -299,11 +299,32 @@ export class PetBehavior {
       return this.handleSlowingDownState(deltaTime);
     }
 
-    this.position = {
+    // Clamp position to screen bounds to prevent pet from going off-screen
+    const clampedPosition = this.clampToScreen({
       x: newX,
       y: newY,
-    };
+    });
 
+    // Check if we hit screen edge (position at boundary)
+    // screenBounds already accounts for window size
+    const atLeftEdge = clampedPosition.x <= 0;
+    const atRightEdge = clampedPosition.x >= this.screenBounds.width;
+    const atTopEdge = clampedPosition.y <= 0;
+    const atBottomEdge = clampedPosition.y >= this.screenBounds.height;
+
+    if (atLeftEdge || atRightEdge || atTopEdge || atBottomEdge) {
+      // We hit the edge - stop wandering and go to idle
+      this.targetPosition = null;
+      this.transitionTo('idle');
+      this.position = clampedPosition;
+      return {
+        position: this.position,
+        animation: 'idle',
+        direction: this.direction,
+      };
+    }
+
+    this.position = clampedPosition;
     this.direction = dx > 0 ? 'right' : 'left';
 
     // Choose walk animation based on energy level
@@ -567,10 +588,10 @@ export class PetBehavior {
       if (distance > 5) {
         const moveDistance = (currentSpeed * _deltaTime) / 1000;
         const ratio = Math.min(moveDistance / distance, 1);
-        this.position = {
+        this.position = this.clampToScreen({
           x: this.position.x + dx * ratio,
           y: this.position.y + dy * ratio,
-        };
+        });
         this.direction = dx > 0 ? 'right' : 'left';
       }
     }
@@ -603,10 +624,10 @@ export class PetBehavior {
       if (distance > 2 && currentSpeed > 5) {
         const moveDistance = (currentSpeed * _deltaTime) / 1000;
         const ratio = Math.min(moveDistance / distance, 1);
-        this.position = {
+        this.position = this.clampToScreen({
           x: this.position.x + dx * ratio,
           y: this.position.y + dy * ratio,
-        };
+        });
       }
     }
 
@@ -819,9 +840,10 @@ export class PetBehavior {
   }
 
   private clampToScreen(pos: Position): Position {
+    // screenBounds already accounts for window size, no need to subtract PET_SIZE
     return {
-      x: Math.max(0, Math.min(pos.x, this.screenBounds.width - this.PET_SIZE)),
-      y: Math.max(0, Math.min(pos.y, this.screenBounds.height - this.PET_SIZE)),
+      x: Math.max(0, Math.min(pos.x, this.screenBounds.width)),
+      y: Math.max(0, Math.min(pos.y, this.screenBounds.height)),
     };
   }
 

@@ -374,7 +374,11 @@ fn get_screen_size(app: tauri::AppHandle) -> (u32, u32) {
     if let Some(window) = app.get_webview_window("main") {
         if let Ok(Some(monitor)) = window.current_monitor() {
             let size = monitor.size();
-            return (size.width, size.height);
+            let scale_factor = monitor.scale_factor();
+            // Convert physical pixels to logical points (for macOS Retina displays)
+            let logical_width = (size.width as f64 / scale_factor) as u32;
+            let logical_height = (size.height as f64 / scale_factor) as u32;
+            return (logical_width, logical_height);
         }
     }
     (1920, 1080) // default fallback
