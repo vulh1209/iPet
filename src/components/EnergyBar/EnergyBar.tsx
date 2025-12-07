@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { getEnergyLevel } from '../../types/mood';
+import { useStatChangeDetector } from '../../hooks/useStatChangeDetector';
 import './EnergyBar.css';
 
 interface EnergyBarProps {
@@ -8,34 +9,15 @@ interface EnergyBarProps {
 }
 
 export function EnergyBar({ energy, isVisible, isSleeping = false }: EnergyBarProps) {
-  const [energyChange, setEnergyChange] = useState<number | null>(null);
-  const prevEnergyRef = useRef(energy);
-
-  // Detect energy changes and show floating indicator
-  useEffect(() => {
-    const diff = energy - prevEnergyRef.current;
-    // Always update prevRef FIRST, before any early returns
-    prevEnergyRef.current = energy;
-
-    if (diff !== 0 && Math.abs(diff) < 50) { // Ignore large jumps (initial load, etc.)
-      setEnergyChange(diff);
-      const timer = setTimeout(() => setEnergyChange(null), 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [energy]);
+  const energyChange = useStatChangeDetector(energy);
 
   if (!isVisible || isSleeping) return null;
 
-  const getEnergyClass = () => {
-    if (energy < 15) return 'exhausted';
-    if (energy < 35) return 'tired';
-    if (energy < 60) return 'normal';
-    if (energy < 85) return 'energetic';
-    return 'hyperactive';
-  };
+  // Use centralized thresholds from mood.ts
+  const energyLevel = getEnergyLevel(energy);
 
   return (
-    <div className={`energy-bar-container ${getEnergyClass()}`}>
+    <div className={`energy-bar-container ${energyLevel}`}>
       <div className="energy-label">
         <span className="energy-icon">⚡</span>
         <span className="energy-value">{Math.round(energy)}</span>

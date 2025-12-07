@@ -95,14 +95,8 @@ export function Pet() {
   const lastDirectionRef = useRef<Direction>('right');
   const lastSquishRef = useRef<number>(1);
 
-  const [, setScreenSize] = useState({ width: 1920, height: 1080 });
   const [isDragging, setIsDragging] = useState(false);
   const dragOffsetRef = useRef({ x: 0, y: 0 });
-
-  // State kept for potential UI/debugging use
-  const [, setAnimation] = useState<AnimationType>('idle');
-  const [, setDirection] = useState<Direction>('right');
-  const [, setSquishFactor] = useState(1.0);
   const [isRejecting, setIsRejecting] = useState(false);
 
   // Load sprites
@@ -137,8 +131,6 @@ export function Pet() {
     async function init() {
       try {
         const [width, height] = await invoke<[number, number]>('get_screen_size');
-        setScreenSize({ width, height });
-
         behaviorRef.current = new PetBehavior(
           { x: 100, y: 100 },
           { width: width - WINDOW_SIZE, height: height - WINDOW_SIZE }
@@ -189,10 +181,6 @@ export function Pet() {
         currentAnimation = result.animation;
         currentDirection = result.direction;
         currentSquish = result.squishFactor ?? 1.0;
-
-        setAnimation(currentAnimation);
-        setDirection(currentDirection);
-        setSquishFactor(currentSquish);
         setIsRejecting(result.isRejecting ?? false);
       } else {
         // While dragging: use drag animation
