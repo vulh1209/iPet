@@ -14,7 +14,9 @@ export interface GeminiResponse {
 
 // Use Gemini 2.5 Flash Lite - fastest and cheapest model
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
-const GEMINI_STREAM_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent';
+
+// Typewriter effect delay (ms per character)
+const TYPEWRITER_DELAY = 50;
 
 export type StreamCallback = (chunk: string, fullText: string) => void;
 
@@ -73,7 +75,8 @@ export class GeminiService {
     // Ensure history is loaded before chatting
     await this.initialize();
 
-    const settings = await settingsService.loadSettings();
+    // Force reload settings to get latest API key (in case user changed it)
+    const settings = await settingsService.loadSettings(true);
     const apiKey = settings.gemini_api_key;
 
     if (!apiKey) {
@@ -111,8 +114,8 @@ export class GeminiService {
   }
 
   /**
-   * Send a message to Gemini with streaming response
-   * Calls onChunk callback for each text chunk received
+   * Send a message to Gemini with typewriter effect
+   * Gets full response then simulates typing character by character
    */
   async chatStream(
     userMessage: string,
@@ -120,7 +123,8 @@ export class GeminiService {
   ): Promise<GeminiResponse> {
     await this.initialize();
 
-    const settings = await settingsService.loadSettings();
+    // Force reload settings to get latest API key (in case user changed it)
+    const settings = await settingsService.loadSettings(true);
     const apiKey = settings.gemini_api_key;
 
     if (!apiKey) {
@@ -131,14 +135,13 @@ export class GeminiService {
     const systemPrompt = this.buildSystemPrompt(personality);
 
     try {
-      const response = await this.callGeminiStreamAPI(
-        apiKey,
-        systemPrompt,
-        userMessage,
-        onChunk
-      );
+      // Get full response first
+      const response = await this.callGeminiAPI(apiKey, systemPrompt, userMessage);
 
       if (response.text) {
+        // Simulate typewriter effect - emit characters one by one
+        await this.simulateTypewriter(response.text, onChunk);
+
         this.conversationHistory.push({ role: 'user', content: userMessage });
         this.conversationHistory.push({ role: 'model', content: response.text });
 
@@ -151,11 +154,25 @@ export class GeminiService {
 
       return response;
     } catch (error) {
-      console.error('Gemini Stream API error:', error);
       return {
         text: '',
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  /**
+   * Simulate typewriter effect by emitting characters one by one
+   */
+  private async simulateTypewriter(
+    text: string,
+    onChunk: StreamCallback
+  ): Promise<void> {
+    let displayed = '';
+    for (const char of text) {
+      displayed += char;
+      onChunk(char, displayed);
+      await new Promise(resolve => setTimeout(resolve, TYPEWRITER_DELAY));
     }
   }
 
@@ -250,93 +267,6 @@ STRICT RULES:
     }
 
     return { text };
-  }
-
-  /**
-   * Make streaming API call to Gemini using SSE
-   * Parses SSE events and calls onChunk for each text chunk
-   */
-  private async callGeminiStreamAPI(
-    apiKey: string,
-    systemPrompt: string,
-    message: string,
-    onChunk: StreamCallback
-  ): Promise<GeminiResponse> {
-    const contents = this.buildContents(systemPrompt, message);
-
-    // Use streamGenerateContent with alt=sse for SSE streaming
-    const response = await fetch(
-      `${GEMINI_STREAM_URL}?key=${apiKey}&alt=sse`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 30,
-            topP: 0.9,
-            topK: 40,
-          },
-          safetySettings: [
-            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          ],
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.error?.message || `API request failed: ${response.status}`
-      );
-    }
-
-    if (!response.body) {
-      throw new Error('Response body is null');
-    }
-
-    // Read SSE stream
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-
-      // Parse SSE events (format: "data: {...}\n\n")
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || ''; // Keep incomplete line in buffer
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr && jsonStr !== '[DONE]') {
-            try {
-              const data = JSON.parse(jsonStr);
-              const chunk = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-              if (chunk) {
-                fullText += chunk;
-                onChunk(chunk, fullText);
-              }
-            } catch {
-              // Skip invalid JSON
-            }
-          }
-        }
-      }
-    }
-
-    return { text: fullText };
   }
 
   /**
