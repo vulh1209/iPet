@@ -39,11 +39,18 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 
 ### Download (Recommended)
 
-1. Download the latest `iPet_x.x.x_universal.dmg` from [Releases](../../releases)
+1. Download the latest DMG from [Releases](../../releases):
+   - `iPet_x.x.x_aarch64.dmg` - Apple Silicon (M1/M2/M3)
+   - `iPet_x.x.x_x64.dmg` - Intel Mac
 2. Open the DMG and drag **iPet** to your **Applications** folder
-3. **First launch only**: Right-click iPet → Open → Open
-   > This is required once because the app is not notarized (no $99 Apple Developer fee)
-4. Grant microphone permission when prompted (for voice chat)
+3. **Important**: Run this command in Terminal to allow the app:
+   ```bash
+   xattr -cr /Applications/iPet.app
+   ```
+4. Open iPet from Applications
+5. Grant microphone permission when prompted (for voice chat)
+
+> **Why?** The app is not notarized (no $99 Apple Developer fee), so macOS blocks it by default.
 
 ### Build from Source
 
