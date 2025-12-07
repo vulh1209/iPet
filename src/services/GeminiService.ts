@@ -14,6 +14,9 @@ export interface GeminiResponse {
 
 // Use Gemini 2.5 Flash Lite - fastest and cheapest model
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+const GEMINI_STREAM_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:streamGenerateContent';
+
+export type StreamCallback = (chunk: string, fullText: string) => void;
 
 /**
  * Service for interacting with Google Gemini API
@@ -100,6 +103,55 @@ export class GeminiService {
       return response;
     } catch (error) {
       console.error('Gemini API error:', error);
+      return {
+        text: '',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Send a message to Gemini with streaming response
+   * Calls onChunk callback for each text chunk received
+   */
+  async chatStream(
+    userMessage: string,
+    onChunk: StreamCallback
+  ): Promise<GeminiResponse> {
+    await this.initialize();
+
+    const settings = await settingsService.loadSettings();
+    const apiKey = settings.gemini_api_key;
+
+    if (!apiKey) {
+      return { text: '', error: 'API key not configured' };
+    }
+
+    const personality = getPersonalityTraits(settings.personality);
+    const systemPrompt = this.buildSystemPrompt(personality);
+
+    try {
+      const response = await this.callGeminiStreamAPI(
+        apiKey,
+        systemPrompt,
+        userMessage,
+        onChunk
+      );
+
+      if (response.text) {
+        this.conversationHistory.push({ role: 'user', content: userMessage });
+        this.conversationHistory.push({ role: 'model', content: response.text });
+
+        if (this.conversationHistory.length > 20) {
+          this.conversationHistory = this.conversationHistory.slice(-20);
+        }
+
+        await this.saveHistory();
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Gemini Stream API error:', error);
       return {
         text: '',
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -198,6 +250,93 @@ STRICT RULES:
     }
 
     return { text };
+  }
+
+  /**
+   * Make streaming API call to Gemini using SSE
+   * Parses SSE events and calls onChunk for each text chunk
+   */
+  private async callGeminiStreamAPI(
+    apiKey: string,
+    systemPrompt: string,
+    message: string,
+    onChunk: StreamCallback
+  ): Promise<GeminiResponse> {
+    const contents = this.buildContents(systemPrompt, message);
+
+    // Use streamGenerateContent with alt=sse for SSE streaming
+    const response = await fetch(
+      `${GEMINI_STREAM_URL}?key=${apiKey}&alt=sse`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 30,
+            topP: 0.9,
+            topK: 40,
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          ],
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || `API request failed: ${response.status}`
+      );
+    }
+
+    if (!response.body) {
+      throw new Error('Response body is null');
+    }
+
+    // Read SSE stream
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // Parse SSE events (format: "data: {...}\n\n")
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr && jsonStr !== '[DONE]') {
+            try {
+              const data = JSON.parse(jsonStr);
+              const chunk = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+              if (chunk) {
+                fullText += chunk;
+                onChunk(chunk, fullText);
+              }
+            } catch {
+              // Skip invalid JSON
+            }
+          }
+        }
+      }
+    }
+
+    return { text: fullText };
   }
 
   /**

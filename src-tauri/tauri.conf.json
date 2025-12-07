@@ -15,8 +15,8 @@
       {
         "label": "main",
         "title": "iPet",
-        "width": 100,
-        "height": 100,
+        "width": 200,
+        "height": 180,
         "x": 10,
         "y": 10,
         "resizable": false,

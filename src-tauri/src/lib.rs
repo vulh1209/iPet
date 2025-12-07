@@ -363,6 +363,25 @@ fn set_window_position(app: tauri::AppHandle, x: i32, y: i32) {
 #[tauri::command]
 fn set_window_size(app: tauri::AppHandle, width: u32, height: u32) {
     if let Some(window) = app.get_webview_window("main") {
+        // Get current position and size before resizing
+        if let (Ok(current_pos), Ok(current_size)) = (window.outer_position(), window.outer_size()) {
+            let scale = window.scale_factor().unwrap_or(1.0);
+            let current_logical_height = current_size.height as f64 / scale;
+            let new_logical_height = height as f64;
+
+            // Calculate how much to move up (difference in height)
+            let height_diff = new_logical_height - current_logical_height;
+
+            // Move window up by the height difference so pet stays in place
+            // Clamp to 0 so window doesn't go above screen top
+            let new_y = ((current_pos.y as f64 / scale) - height_diff).max(0.0);
+
+            // Set new position first (move up), then resize
+            let _ = window.set_position(tauri::Position::Logical(
+                tauri::LogicalPosition { x: current_pos.x as f64 / scale, y: new_y }
+            ));
+        }
+
         let _ = window.set_size(tauri::Size::Logical(
             tauri::LogicalSize { width: width as f64, height: height as f64 }
         ));
@@ -398,6 +417,7 @@ fn close_settings_window(app: tauri::AppHandle) {
         let _ = window.hide();
     }
 }
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

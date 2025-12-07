@@ -20,6 +20,7 @@ interface UseVoiceInputReturn {
   isProcessing: boolean;
   transcript: string;
   response: GeminiResponse | null;
+  streamingText: string; // Real-time streaming response
   error: VoiceInputError | null;
   startListening: () => void;
   stopListening: () => void;
@@ -35,6 +36,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
   const [state, setState] = useState<VoiceInputState>('idle');
   const [transcript, setTranscript] = useState('');
   const [response, setResponse] = useState<GeminiResponse | null>(null);
+  const [streamingText, setStreamingText] = useState('');
   const [error, setError] = useState<VoiceInputError | null>(null);
 
   const recognitionRef = useRef<SpeechRecognitionService | null>(null);
@@ -68,29 +70,41 @@ export function useVoiceInput(): UseVoiceInputReturn {
   // Handle recognition result
   const handleResult = useCallback(
     async (result: SpeechRecognitionResult) => {
+      const text = result.transcript.trim();
+
+      // Update transcript in realtime (even for interim results)
+      if (text) {
+        setTranscript(text);
+      }
+
+      // Only process when final
       if (!result.isFinal) return;
 
-      const text = result.transcript.trim();
       if (!text) {
         setState('idle');
         return;
       }
 
-      setTranscript(text);
       setState('processing');
+      setStreamingText(''); // Clear previous streaming text
 
-      // Send to Gemini
-      const geminiResponse = await geminiService.chat(text);
+      // Send to Gemini with streaming
+      const geminiResponse = await geminiService.chatStream(text, (_chunk, fullText) => {
+        // Update streaming text in real-time
+        setStreamingText(fullText);
+      });
 
       if (geminiResponse.error) {
         // Clear transcript when API error occurs to hide speech bubble
         setTranscript('');
+        setStreamingText('');
         setErrorWithTimeout({
           type: 'api',
           message: geminiResponse.error,
         });
       } else {
         setResponse(geminiResponse);
+        setStreamingText(''); // Clear streaming, response is now complete
         setState('idle');
 
         // Clear response after 5 seconds to hide speech bubble
@@ -278,6 +292,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
     isProcessing: state === 'processing',
     transcript,
     response,
+    streamingText,
     error,
     startListening,
     stopListening,

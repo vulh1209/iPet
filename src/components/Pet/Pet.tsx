@@ -13,11 +13,9 @@ import { drawSprite } from '../../services/SpriteRenderer';
 import { MoodIndicator } from '../MoodIndicator';
 import { EnergyBar } from '../EnergyBar';
 import { HappinessBar } from '../HappinessBar';
-import { SpeechBubble } from './SpeechBubble';
 import './Pet.css';
 
 const WINDOW_SIZE = 100;
-const EXPANDED_HEIGHT = 220; // Extra height for speech bubble with decorations
 
 export function Pet() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,6 +52,7 @@ export function Pet() {
     isProcessing,
     transcript,
     response,
+    streamingText,
     error: voiceError,
     startListening,
     stopListening,
@@ -250,26 +249,67 @@ export function Pet() {
   // Determine which indicator to show
   const showMicIndicator = isListening || isProcessing;
   const showErrorIndicator = voiceError !== null;
-  const showSpeechBubble = !!(transcript || response?.text);
 
-  // Resize window when speech bubble needs to show
+  // Bubble state for in-window display
+  const [bubbleText, setBubbleText] = useState('');
+  const [bubbleVisible, setBubbleVisible] = useState(false);
+  const [bubbleProcessing, setBubbleProcessing] = useState(false);
+  const [bubbleSpeaker, setBubbleSpeaker] = useState<'user' | 'pet'>('pet');
+  const bubbleContentRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll bubble content to the right (typewriter effect)
   useEffect(() => {
-    if (showSpeechBubble) {
-      // Expand window to fit speech bubble above
-      invoke('set_window_size', { width: WINDOW_SIZE, height: EXPANDED_HEIGHT });
-    } else {
-      // Return to normal size
-      invoke('set_window_size', { width: WINDOW_SIZE, height: WINDOW_SIZE });
+    if (bubbleContentRef.current && bubbleProcessing) {
+      bubbleContentRef.current.scrollLeft = bubbleContentRef.current.scrollWidth;
     }
-  }, [showSpeechBubble]);
+  }, [bubbleText, bubbleProcessing]);
+
+  useEffect(() => {
+    // Determine what to show
+    let text = '';
+    let processing = false;
+    let shouldShow = false;
+    let speaker: 'user' | 'pet' = 'pet';
+
+    if (response?.text) {
+      // Final response - show complete text
+      text = response.text;
+      processing = false;
+      shouldShow = true;
+      speaker = 'pet';
+    } else if (streamingText) {
+      // Streaming response - show real-time with typewriter effect
+      text = streamingText;
+      processing = true;
+      shouldShow = true;
+      speaker = 'pet';
+    } else if (isProcessing && transcript) {
+      // Processing but no response yet - show transcript
+      text = transcript;
+      processing = true;
+      shouldShow = true;
+      speaker = 'user';
+    } else if (isListening && transcript) {
+      // Show realtime transcript while listening
+      text = transcript;
+      processing = true;
+      shouldShow = true;
+      speaker = 'user';
+    } else if (isListening) {
+      text = '...';
+      processing = true;
+      shouldShow = true;
+      speaker = 'user';
+    }
+
+    setBubbleText(text);
+    setBubbleVisible(shouldShow);
+    setBubbleProcessing(processing);
+    setBubbleSpeaker(speaker);
+  }, [response, isProcessing, transcript, isListening, streamingText]);
 
   return (
     <div className="pet-container" onClick={handleClick}>
-      {/* Speech bubble for transcript/response - above pet */}
-      {showSpeechBubble && (
-        <SpeechBubble text={response?.text || transcript || ''} />
-      )}
-
       {/* Pet canvas - at bottom */}
       <div className="pet-wrapper">
         <canvas
@@ -316,6 +356,24 @@ export function Pet() {
           <div className="reject-indicator" />
         )}
       </div>
+
+      {/* Speech bubble - positioned absolute, outside pet-wrapper */}
+      {bubbleVisible && (
+        <div className={`speech-bubble ${bubbleSpeaker === 'user' ? 'speech-bubble--user' : 'speech-bubble--pet'}`}>
+          <div className="speech-bubble-inner">
+            <div
+              ref={bubbleContentRef}
+              className={`speech-bubble-content ${bubbleProcessing ? 'typewriter' : ''}`}
+            >
+              {bubbleProcessing ? (
+                <span className="typewriter-text">{bubbleText || '...'}</span>
+              ) : (
+                bubbleText
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
