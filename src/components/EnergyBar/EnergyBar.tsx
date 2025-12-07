@@ -14,12 +14,14 @@ export function EnergyBar({ energy, isVisible, isSleeping = false }: EnergyBarPr
   // Detect energy changes and show floating indicator
   useEffect(() => {
     const diff = energy - prevEnergyRef.current;
+    // Always update prevRef FIRST, before any early returns
+    prevEnergyRef.current = energy;
+
     if (diff !== 0 && Math.abs(diff) < 50) { // Ignore large jumps (initial load, etc.)
       setEnergyChange(diff);
       const timer = setTimeout(() => setEnergyChange(null), 1500);
       return () => clearTimeout(timer);
     }
-    prevEnergyRef.current = energy;
   }, [energy]);
 
   if (!isVisible || isSleeping) return null;
