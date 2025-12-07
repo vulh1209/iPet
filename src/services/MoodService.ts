@@ -16,6 +16,7 @@ export class MoodService {
   private static instance: MoodService;
   private moodState: PetMoodState = createDefaultMoodState();
   private decayInterval: ReturnType<typeof setInterval> | null = null;
+  private sleepRestoreInterval: ReturnType<typeof setInterval> | null = null;
   private listeners: Set<MoodListener> = new Set();
   private interactionCooldowns: Map<string, number> = new Map();
   private decayDelay: number;
@@ -104,17 +105,17 @@ export class MoodService {
     const offlineMinutes = cappedOfflineTime / (60 * 1000);
     const decayRate = MOOD_CONSTANTS.OFFLINE_DECAY_MULTIPLIER;
 
-    // Apply reduced decay
-    this.moodState.stats.happiness = Math.max(
+    // Apply reduced decay (use Math.floor for integer values)
+    this.moodState.stats.happiness = Math.floor(Math.max(
       MOOD_CONSTANTS.MIN_STAT,
       this.moodState.stats.happiness -
         offlineMinutes * MOOD_CONSTANTS.HAPPINESS_DECAY_RATE * decayRate
-    );
-    this.moodState.stats.energy = Math.max(
+    ));
+    this.moodState.stats.energy = Math.floor(Math.max(
       MOOD_CONSTANTS.MIN_STAT,
       this.moodState.stats.energy -
         offlineMinutes * MOOD_CONSTANTS.ENERGY_DECAY_RATE * decayRate
-    );
+    ));
 
     // Update timestamps
     this.moodState.timestamps.lastInteraction = now;
@@ -138,24 +139,31 @@ export class MoodService {
 
     if (sleep.isSleeping && sleep.scheduledWakeTime) {
       if (now >= sleep.scheduledWakeTime) {
-        // Pet should wake up
+        // Pet should wake up - calculate offline energy gain
         const sleepDuration = sleep.scheduledWakeTime - (sleep.sleepStartTime || now);
         const sleepMinutes = sleepDuration / (60 * 1000);
 
-        // Restore energy
-        stats.energy = Math.min(
+        // Restore energy based on sleep duration (for offline time)
+        stats.energy = Math.floor(Math.min(
           MOOD_CONSTANTS.MAX_STAT,
           stats.energy + sleepMinutes * SLEEP_CONSTANTS.ENERGY_RESTORE_PER_MINUTE
-        );
+        ));
 
-        // Happiness boost on wake
-        stats.happiness = Math.min(
-          MOOD_CONSTANTS.MAX_STAT,
-          stats.happiness + SLEEP_CONSTANTS.HAPPINESS_BOOST_ON_WAKE
-        );
-
-        // Wake up
+        // Wake up (adds happiness boost)
         this.wakeUp();
+      } else {
+        // Still sleeping - calculate offline energy gain and start realtime restore
+        const elapsedSleep = now - (sleep.sleepStartTime || now);
+        const elapsedMinutes = elapsedSleep / (60 * 1000);
+
+        // Restore energy for offline sleep time
+        stats.energy = Math.floor(Math.min(
+          MOOD_CONSTANTS.MAX_STAT,
+          stats.energy + elapsedMinutes * SLEEP_CONSTANTS.ENERGY_RESTORE_PER_MINUTE
+        ));
+
+        // Start realtime energy restoration
+        this.startSleepRestore();
       }
     }
   }
@@ -183,14 +191,20 @@ export class MoodService {
     // Only apply decay for the last check interval
     const intervalMinutes = MOOD_CONSTANTS.DECAY_CHECK_INTERVAL / (60 * 1000);
 
-    this.moodState.stats.happiness = Math.max(
+    this.moodState.stats.happiness = Math.floor(Math.max(
       MOOD_CONSTANTS.MIN_STAT,
       this.moodState.stats.happiness - intervalMinutes * MOOD_CONSTANTS.HAPPINESS_DECAY_RATE
-    );
-    this.moodState.stats.energy = Math.max(
+    ));
+    this.moodState.stats.energy = Math.floor(Math.max(
       MOOD_CONSTANTS.MIN_STAT,
       this.moodState.stats.energy - intervalMinutes * MOOD_CONSTANTS.ENERGY_DECAY_RATE
-    );
+    ));
+
+    // Check for forced sleep due to low energy (immediate after decay)
+    if (this.moodState.stats.energy < SLEEP_CONSTANTS.FORCED_SLEEP_ENERGY_THRESHOLD) {
+      this.startSleep();
+      return; // Skip notifyListeners, startSleep will do it
+    }
 
     this.notifyListeners();
     this.saveMood();
@@ -203,21 +217,8 @@ export class MoodService {
     if (sleep.isSleeping) {
       // Check if it's time to wake up
       if (sleep.scheduledWakeTime && now >= sleep.scheduledWakeTime) {
-        const sleepDuration = now - (sleep.sleepStartTime || now);
-        const sleepMinutes = sleepDuration / (60 * 1000);
-
-        // Restore energy
-        stats.energy = Math.min(
-          MOOD_CONSTANTS.MAX_STAT,
-          stats.energy + sleepMinutes * SLEEP_CONSTANTS.ENERGY_RESTORE_PER_MINUTE
-        );
-
-        // Happiness boost on wake
-        stats.happiness = Math.min(
-          MOOD_CONSTANTS.MAX_STAT,
-          stats.happiness + SLEEP_CONSTANTS.HAPPINESS_BOOST_ON_WAKE
-        );
-
+        // Energy is now restored realtime via sleepRestoreInterval
+        // wakeUp() will add happiness boost
         this.wakeUp();
       }
     } else {
@@ -261,12 +262,55 @@ export class MoodService {
       nextSleepTime: 0, // Will be set on wake
     };
 
+    // Start realtime energy restoration
+    this.startSleepRestore();
+
     this.notifyListeners();
     this.saveMood();
   }
 
+  private startSleepRestore(): void {
+    // Clear any existing interval
+    if (this.sleepRestoreInterval) {
+      clearInterval(this.sleepRestoreInterval);
+    }
+
+    // Restore energy every 10 seconds while sleeping
+    this.sleepRestoreInterval = setInterval(() => {
+      if (!this.moodState.sleep.isSleeping) {
+        this.stopSleepRestore();
+        return;
+      }
+
+      // Add energy per tick (integer only)
+      this.moodState.stats.energy = Math.floor(Math.min(
+        MOOD_CONSTANTS.MAX_STAT,
+        this.moodState.stats.energy + SLEEP_CONSTANTS.ENERGY_RESTORE_PER_TICK
+      ));
+
+      this.notifyListeners();
+      this.saveMood();
+    }, SLEEP_CONSTANTS.ENERGY_RESTORE_INTERVAL);
+  }
+
+  private stopSleepRestore(): void {
+    if (this.sleepRestoreInterval) {
+      clearInterval(this.sleepRestoreInterval);
+      this.sleepRestoreInterval = null;
+    }
+  }
+
   private wakeUp(): void {
     const now = Date.now();
+
+    // Stop realtime energy restoration
+    this.stopSleepRestore();
+
+    // Happiness boost on wake (integer only)
+    this.moodState.stats.happiness = Math.floor(Math.min(
+      MOOD_CONSTANTS.MAX_STAT,
+      this.moodState.stats.happiness + SLEEP_CONSTANTS.HAPPINESS_BOOST_ON_WAKE
+    ));
 
     this.moodState.sleep = {
       isSleeping: false,
@@ -297,10 +341,40 @@ export class MoodService {
   }
 
   // Force wake up when pet is disturbed (e.g., dragged)
-  forceWakeUp(): void {
-    if (this.moodState.sleep.isSleeping) {
-      this.wakeUp();
+  // Returns true if pet is grumpy (low energy wake)
+  forceWakeUp(): boolean {
+    if (!this.moodState.sleep.isSleeping) {
+      return false;
     }
+
+    const isGrumpy = this.moodState.stats.energy < SLEEP_CONSTANTS.FORCED_SLEEP_ENERGY_THRESHOLD;
+
+    // Wake up but with shorter awake time if grumpy
+    this.stopSleepRestore();
+
+    // Happiness boost on wake (reduced if grumpy, integer only)
+    this.moodState.stats.happiness = Math.floor(Math.min(
+      MOOD_CONSTANTS.MAX_STAT,
+      this.moodState.stats.happiness + (isGrumpy ? 0 : SLEEP_CONSTANTS.HAPPINESS_BOOST_ON_WAKE)
+    ));
+
+    const now = Date.now();
+    this.moodState.sleep = {
+      isSleeping: false,
+      sleepStartTime: null,
+      scheduledWakeTime: null,
+      // If grumpy (low energy), go back to sleep after 10 seconds
+      // Otherwise normal 1-3 hour awake duration
+      nextSleepTime: isGrumpy
+        ? now + 10 * 1000  // 10 seconds
+        : Math.floor(now + randomInRange(SLEEP_CONSTANTS.AWAKE_DURATION_MIN, SLEEP_CONSTANTS.AWAKE_DURATION_MAX)),
+    };
+    this.moodState.timestamps.lastSleepEnd = now;
+
+    this.notifyListeners();
+    this.saveMood();
+
+    return isGrumpy;
   }
 
   triggerInteraction(interactionId: string): boolean {
@@ -357,6 +431,12 @@ export class MoodService {
       this.startSleep();
     }
 
+    // Check for forced sleep due to low energy (immediate check)
+    if (!this.moodState.sleep.isSleeping &&
+        this.moodState.stats.energy < SLEEP_CONSTANTS.FORCED_SLEEP_ENERGY_THRESHOLD) {
+      this.startSleep();
+    }
+
     // Notify and save
     this.notifyListeners();
     this.saveMood();
@@ -365,17 +445,18 @@ export class MoodService {
   }
 
   private applyInteractionEffects(interaction: Interaction): void {
-    this.moodState.stats.happiness = Math.max(
+    // Use Math.floor to ensure integer values
+    this.moodState.stats.happiness = Math.floor(Math.max(
       MOOD_CONSTANTS.MIN_STAT,
       Math.min(
         MOOD_CONSTANTS.MAX_STAT,
         this.moodState.stats.happiness + interaction.happinessChange
       )
-    );
-    this.moodState.stats.energy = Math.max(
+    ));
+    this.moodState.stats.energy = Math.floor(Math.max(
       MOOD_CONSTANTS.MIN_STAT,
       Math.min(MOOD_CONSTANTS.MAX_STAT, this.moodState.stats.energy + interaction.energyChange)
-    );
+    ));
   }
 
   private getInteractionCount(interactionId: string): number {
@@ -412,7 +493,15 @@ export class MoodService {
   }
 
   private notifyListeners(): void {
-    this.listeners.forEach((listener) => listener(this.moodState));
+    // Create new object reference to trigger React re-render
+    const newState: PetMoodState = {
+      ...this.moodState,
+      stats: { ...this.moodState.stats },
+      sleep: { ...this.moodState.sleep },
+      timestamps: { ...this.moodState.timestamps },
+      interactionCounts: { ...this.moodState.interactionCounts },
+    };
+    this.listeners.forEach((listener) => listener(newState));
   }
 
   // Cleanup
@@ -421,6 +510,7 @@ export class MoodService {
       clearInterval(this.decayInterval);
       this.decayInterval = null;
     }
+    this.stopSleepRestore();
     this.saveMood();
   }
 }

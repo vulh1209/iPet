@@ -47,6 +47,8 @@ export const SLEEP_CONSTANTS = {
 
   // Energy restoration during sleep
   ENERGY_RESTORE_PER_MINUTE: 2,
+  ENERGY_RESTORE_INTERVAL: 10 * 1000,  // Restore energy every 10 seconds
+  ENERGY_RESTORE_PER_TICK: 1,          // +1 energy per tick
   HAPPINESS_BOOST_ON_WAKE: 5,
 
   // Low energy triggers forced sleep

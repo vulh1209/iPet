@@ -17,7 +17,7 @@ interface UseMoodReturn {
   energy: number;
   isSleeping: boolean;
   triggerInteraction: (id: string) => boolean;
-  forceWakeUp: () => void;
+  forceWakeUp: () => boolean;
   canTriggerMorningGreeting: boolean;
 }
 
@@ -59,8 +59,8 @@ export function useMood(): UseMoodReturn {
     return moodService.triggerInteraction(id);
   }, []);
 
-  const forceWakeUp = useCallback((): void => {
-    moodService.forceWakeUp();
+  const forceWakeUp = useCallback((): boolean => {
+    return moodService.forceWakeUp();
   }, []);
 
   const moodLevel = getMoodLevel(mood.stats.happiness);

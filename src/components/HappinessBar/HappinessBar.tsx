@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useStatChangeDetector } from '../../hooks/useStatChangeDetector';
 import './HappinessBar.css';
 
@@ -9,6 +10,15 @@ interface HappinessBarProps {
 
 export function HappinessBar({ happiness, isVisible, isSleeping = false }: HappinessBarProps) {
   const happinessChange = useStatChangeDetector(happiness);
+  // Counter to force new DOM element for animation restart
+  const [changeKey, setChangeKey] = useState(0);
+
+  // Increment key when change appears to restart animation
+  useEffect(() => {
+    if (happinessChange !== null) {
+      setChangeKey(k => k + 1);
+    }
+  }, [happinessChange]);
 
   if (!isVisible || isSleeping) return null;
 
@@ -41,7 +51,10 @@ export function HappinessBar({ happiness, isVisible, isSleeping = false }: Happi
         />
       </div>
       {happinessChange !== null && (
-        <div className={`happiness-change ${happinessChange > 0 ? 'positive' : 'negative'}`}>
+        <div
+          key={changeKey}
+          className={`happiness-change ${happinessChange > 0 ? 'positive' : 'negative'}`}
+        >
           {happinessChange > 0 ? '+' : ''}{happinessChange}
         </div>
       )}

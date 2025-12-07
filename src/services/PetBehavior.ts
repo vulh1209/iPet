@@ -14,6 +14,7 @@ type BehaviorState =
   | 'dancing'      // When dance party
   | 'yawning'      // Pre-sleep transition
   | 'waking'       // Post-sleep transition
+  | 'grumpy_waking' // Angry wake when disturbed at low energy
   | 'playing'      // When playing catch
   | 'shaking';     // When being gently shaken
 
@@ -37,6 +38,9 @@ export class PetBehavior {
   private isLowHappiness: boolean = false; // Happiness < 40
   private happiness: number = 50; // Current happiness level for mood-based animations
 
+  // Animation queue for sequential animations
+  private animationQueue: BehaviorState[] = [];
+
   private readonly WANDER_SPEED = 30; // pixels per second
   private readonly PET_SIZE = 50;
   private readonly IDLE_MIN = 10000; // 10 seconds minimum
@@ -58,6 +62,7 @@ export class PetBehavior {
   private readonly DANCE_DURATION = 6000; // ms - dance party duration (~7 loops)
   private readonly YAWN_DURATION = 1000; // ms - 4 frames * 250ms
   private readonly WAKE_DURATION = 800; // ms - 4 frames * 200ms
+  private readonly GRUMPY_WAKE_DURATION = 4000; // ms - angry animation when disturbed (4 seconds)
   private readonly PLAY_DURATION = 3000; // ms - playing catch animation
   private readonly SHAKE_DURATION = 800; // ms - gentle shake animation
 
@@ -109,6 +114,8 @@ export class PetBehavior {
         return this.handleYawningState();
       case 'waking':
         return this.handleWakingState();
+      case 'grumpy_waking':
+        return this.handleGrumpyWakingState();
       case 'playing':
         return this.handlePlayingState(deltaTime);
       case 'shaking':
@@ -330,6 +337,39 @@ export class PetBehavior {
     };
   }
 
+  private handleGrumpyWakingState(): BehaviorResult {
+    // Grumpy wake animation - angry face when disturbed at low energy
+    if (this.stateTimer > this.GRUMPY_WAKE_DURATION) {
+      // Check queue for next animation (e.g., yawning -> sleeping)
+      this.transitionToNextOrFallback('idle');
+      return this.getResultForCurrentState();
+    }
+
+    // Aggressive shake effect while grumpy - faster and stronger
+    const shakeSpeed = 15;
+    const shakeAmount = 6;
+    const shakeOffset = Math.sin(this.stateTimer * shakeSpeed / 1000 * Math.PI * 2) * shakeAmount;
+
+    return {
+      position: { x: this.position.x + shakeOffset, y: this.position.y },
+      animation: 'angry',
+      direction: this.direction,
+    };
+  }
+
+  // Helper to get result for current state (used after queue transition)
+  private getResultForCurrentState(): BehaviorResult {
+    switch (this.currentState) {
+      case 'yawning':
+        return this.handleYawningState();
+      case 'sleeping':
+        return this.handleSleepingState();
+      case 'idle':
+      default:
+        return this.handleIdleState();
+    }
+  }
+
   private handlePlayingState(_deltaTime: number): BehaviorResult {
     // Playing catch - bouncy happy animation with vertical bounce
     if (this.stateTimer > this.PLAY_DURATION) {
@@ -441,6 +481,36 @@ export class PetBehavior {
     this.stateTimer = 0;
   }
 
+  // Queue multiple animations
+  private queueAnimations(...states: BehaviorState[]): void {
+    this.animationQueue.push(...states);
+  }
+
+  // Clear queue and transition immediately
+  private forceTransition(newState: BehaviorState): void {
+    this.animationQueue = [];
+    this.transitionTo(newState);
+  }
+
+  // Process next animation in queue (called when current animation ends)
+  private processQueue(): BehaviorState {
+    if (this.animationQueue.length > 0) {
+      const nextState = this.animationQueue.shift()!;
+      this.transitionTo(nextState);
+      return nextState;
+    }
+    return 'idle';
+  }
+
+  // Check if there's a queued animation and transition to it, otherwise go to fallback
+  private transitionToNextOrFallback(fallback: BehaviorState = 'idle'): void {
+    if (this.animationQueue.length > 0) {
+      this.processQueue();
+    } else {
+      this.transitionTo(fallback);
+    }
+  }
+
   private randomInRange(min: number, max: number): number {
     return min + Math.random() * (max - min);
   }
@@ -504,13 +574,30 @@ export class PetBehavior {
   setMoodSleeping(sleeping: boolean): void {
     this.isMoodSleeping = sleeping;
     if (sleeping && this.currentState !== 'being_dragged') {
+      // If grumpy_waking, queue yawning -> sleeping for after it finishes
+      if (this.currentState === 'grumpy_waking') {
+        this.queueAnimations('yawning', 'sleeping');
+        return;
+      }
       // Don't interrupt yawning - it will transition to sleeping automatically
-      if (this.currentState !== 'yawning') {
+      if (this.currentState !== 'yawning' && this.currentState !== 'sleeping') {
         this.transitionTo('yawning'); // Play yawn before sleep
       }
-    } else if (!sleeping && this.currentState === 'sleeping') {
-      this.transitionTo('waking'); // Play wake animation after sleep
+    } else if (!sleeping) {
+      // Don't override grumpy_waking with normal waking
+      if (this.currentState === 'grumpy_waking') {
+        return; // Let grumpy animation finish, queue is empty so will go to idle
+      }
+      if (this.currentState === 'sleeping') {
+        this.transitionTo('waking'); // Play wake animation after sleep
+      }
     }
+  }
+
+  // Trigger grumpy wake animation (called when force waking at low energy)
+  // Uses forceTransition to clear any pending animations and show angry immediately
+  onGrumpyWake(): void {
+    this.forceTransition('grumpy_waking');
   }
 
   isSleeping(): boolean {

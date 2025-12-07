@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { getEnergyLevel } from '../../types/mood';
 import { useStatChangeDetector } from '../../hooks/useStatChangeDetector';
 import './EnergyBar.css';
@@ -10,14 +11,24 @@ interface EnergyBarProps {
 
 export function EnergyBar({ energy, isVisible, isSleeping = false }: EnergyBarProps) {
   const energyChange = useStatChangeDetector(energy);
+  // Counter to force new DOM element for animation restart
+  const [changeKey, setChangeKey] = useState(0);
 
-  if (!isVisible || isSleeping) return null;
+  // Increment key when change appears to restart animation
+  useEffect(() => {
+    if (energyChange !== null) {
+      setChangeKey(k => k + 1);
+    }
+  }, [energyChange]);
+
+  if (!isVisible) return null;
 
   // Use centralized thresholds from mood.ts
   const energyLevel = getEnergyLevel(energy);
+  const containerClass = `energy-bar-container ${energyLevel}${isSleeping ? ' sleeping' : ''}`;
 
   return (
-    <div className={`energy-bar-container ${energyLevel}`}>
+    <div className={containerClass}>
       <div className="energy-label">
         <span className="energy-icon">⚡</span>
         <span className="energy-value">{Math.round(energy)}</span>
@@ -29,7 +40,10 @@ export function EnergyBar({ energy, isVisible, isSleeping = false }: EnergyBarPr
         />
       </div>
       {energyChange !== null && (
-        <div className={`energy-change ${energyChange > 0 ? 'positive' : 'negative'}`}>
+        <div
+          key={changeKey}
+          className={`energy-change ${energyChange > 0 ? 'positive' : 'negative'}`}
+        >
           {energyChange > 0 ? '+' : ''}{energyChange}
         </div>
       )}

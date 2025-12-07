@@ -5,7 +5,7 @@ import { PetBehavior } from '../services/PetBehavior';
 interface UsePetDragConfig {
   behaviorRef: React.RefObject<PetBehavior | null>;
   triggerInteraction: (id: string) => boolean;
-  forceWakeUp: () => void;
+  forceWakeUp: () => boolean;
 }
 
 interface UsePetDragReturn {
@@ -27,14 +27,24 @@ export function usePetDrag({
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
-    setIsDragging(true);
     dragOffsetRef.current = {
       x: e.clientX,
       y: e.clientY,
     };
-    behaviorRef.current?.onDragStart();
+    const behavior = behaviorRef.current;
+
     // Wake up pet if sleeping when dragged
-    forceWakeUp();
+    const isGrumpy = forceWakeUp();
+
+    if (isGrumpy) {
+      // Low energy wake - show grumpy animation immediately (clears queue)
+      // Pet will go back to sleep after 10s via mood system
+      behavior?.onGrumpyWake();
+      // Don't set isDragging - pet refuses to be dragged when grumpy
+      return;
+    }
+    setIsDragging(true);
+    behavior?.onDragStart();
   }, [behaviorRef, forceWakeUp]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
