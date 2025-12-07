@@ -30,6 +30,7 @@ export interface AppSettings {
   personality: PersonalityConfig;
   microphone: MicrophoneConfig;
   conversation_retention_days: number;
+  show_energy_bar: boolean;
 }
 
 // Default settings
@@ -45,6 +46,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     language: 'vi-VN',
   },
   conversation_retention_days: 30,
+  show_energy_bar: true,
 };
 
 // Get personality traits string based on config

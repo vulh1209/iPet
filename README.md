@@ -18,6 +18,7 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 - [x] Time-based decay with random delays
 - [x] Sleep/wake cycles (pet gets tired and naps!)
 - [x] Visual mood indicator bars
+- [x] Energy bar below pet (toggleable in Settings)
 - [x] 10 creative interactions with cooldowns
 
 ### Voice Interaction
@@ -31,6 +32,7 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 - [x] Personality presets (Bubbles, Sage, Drowsy, Custom)
 - [x] Dark/light theme support
 - [x] Configurable API key
+- [x] Toggle energy bar visibility
 
 ## Quick Start
 
@@ -128,6 +130,7 @@ ipet/
 ├── src/                      # React frontend
 │   ├── components/
 │   │   ├── Pet/              # Pet component + animations
+│   │   ├── EnergyBar/        # Energy bar below pet
 │   │   └── Settings/         # Settings UI (glassmorphism)
 │   ├── hooks/
 │   │   ├── useSprite.ts      # Sprite loading

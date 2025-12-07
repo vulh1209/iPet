@@ -27,6 +27,7 @@
   width: 100px;
   height: 100px;
   flex-shrink: 0;
+  overflow: visible;
 }
 
 .pet-canvas {

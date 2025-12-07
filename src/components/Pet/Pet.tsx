@@ -9,6 +9,7 @@ import { useMood } from '../../hooks/useMood';
 import { LoadedSprite } from '../../types/sprite';
 import { getFrameRect, getFrameIndex } from '../../services/SpriteLoader';
 import { MoodIndicator } from '../MoodIndicator';
+import { EnergyBar } from '../EnergyBar';
 import './Pet.css';
 
 const WINDOW_SIZE = 100;
@@ -436,6 +437,13 @@ export function Pet() {
           energy={energy}
           isSleeping={isSleeping}
           isActive={showMicIndicator}
+        />
+
+        {/* Energy bar below pet */}
+        <EnergyBar
+          energy={energy}
+          isVisible={settings.show_energy_bar ?? true}
+          isSleeping={isSleeping}
         />
 
         {/* Voice input indicators - pure CSS visual */}

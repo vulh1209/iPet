@@ -28,6 +28,12 @@ pub struct AppSettings {
     pub personality: PersonalityConfig,
     pub microphone: MicrophoneConfig,
     pub conversation_retention_days: u32,
+    #[serde(default = "default_show_energy_bar")]
+    pub show_energy_bar: bool,
+}
+
+fn default_show_energy_bar() -> bool {
+    true
 }
 
 impl Default for AppSettings {
@@ -44,6 +50,7 @@ impl Default for AppSettings {
                 language: "vi-VN".to_string(),
             },
             conversation_retention_days: 30,
+            show_energy_bar: true,
         }
     }
 }
