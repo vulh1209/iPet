@@ -11,7 +11,18 @@ env:
 
 jobs:
   build-macos:
-    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            arch: arm64
+          - runner: macos-13
+            target: x86_64-apple-darwin
+            arch: x64
+
+    runs-on: ${{ matrix.runner }}
     permissions:
       contents: write
 
@@ -28,18 +39,19 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: aarch64-apple-darwin,x86_64-apple-darwin
+          targets: ${{ matrix.target }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          key: ${{ matrix.target }}
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Tauri app (Universal Binary)
-        run: npm run tauri build -- --target universal-apple-darwin
+      - name: Build Tauri app
+        run: npm run tauri build -- --target ${{ matrix.target }}
 
       - name: Get version from tag
         id: get_version
@@ -53,6 +65,6 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: |
-            src-tauri/target/universal-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
