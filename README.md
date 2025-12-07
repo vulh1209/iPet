@@ -10,23 +10,29 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 - [x] Transparent window always on top
 - [x] 19 animations with mood-based variations
 - [x] Spring physics bounce when dropped
-- [x] Random wandering movement
-- [x] Click reactions
+- [x] Random wandering movement with energy-based speed
+- [x] Click reactions with bounce physics
+- [x] State-based movement (run/walk/tired based on energy level)
 
 ### Mood System
 - [x] Two core stats: Happiness (0-100) and Energy (0-100)
 - [x] Time-based decay with random delays
 - [x] Sleep/wake cycles with yawn/wake transitions
+- [x] Grumpy wake behavior when disturbed during sleep
 - [x] Visual mood indicator bars
 - [x] Happiness bar + Energy bar below pet (toggleable in Settings)
 - [x] Mood-based idle animations (ecstatic, happy, sad, angry)
 - [x] 10 creative interactions with cooldowns
+- [x] Realtime energy restoration during idle states
 
 ### Voice Interaction
 - [x] Press **"V"** to activate voice input
-- [x] AI-powered responses via Google Gemini
+- [x] AI-powered responses via Google Gemini 2.5 Flash
 - [x] Short kawaii responses (3 words + emojis)
 - [x] Beautiful glassmorphism speech bubble
+- [x] SSE streaming with typewriter effect
+- [x] Speaker colors for visual distinction
+- [x] Persistent chat history across sessions
 
 ### Pet Customization
 - [x] Color tint presets (Original, Pink, Mint, Golden, Purple, Coral)
@@ -38,7 +44,7 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 - [x] System tray menu
 - [x] Personality presets (Bubbles, Sage, Drowsy, Custom)
 - [x] Dark/light theme support
-- [x] Configurable API key
+- [x] Encrypted API key storage (AES-256-GCM)
 - [x] Toggle energy bar & happiness bar visibility
 - [x] Pet color customization with live reload
 
@@ -169,8 +175,9 @@ The interaction system is designed with these principles:
 
 - **Frontend**: React + TypeScript + Vite
 - **Backend**: Tauri 2.0 (Rust)
-- **AI**: Google Gemini 2.0 Flash Lite
+- **AI**: Google Gemini 2.5 Flash (SSE streaming)
 - **Speech**: Web Speech API
+- **Security**: AES-256-GCM encryption for API keys
 
 ## Project Structure
 
@@ -178,47 +185,62 @@ The interaction system is designed with these principles:
 ipet/
 ├── src/                      # React frontend
 │   ├── components/
-│   │   ├── Pet/              # Pet component + animations
-│   │   ├── EnergyBar/        # Energy bar UI
+│   │   ├── Pet/              # Pet component + animations + SpeechBubble
+│   │   ├── EnergyBar/        # Energy bar UI (color-coded)
 │   │   ├── HappinessBar/     # Happiness bar UI
 │   │   └── Settings/         # Settings UI (glassmorphism)
 │   ├── hooks/
 │   │   ├── useSprite.ts      # Sprite loading
-│   │   ├── useSettings.ts    # Settings state
-│   │   └── useVoiceInput.ts  # Voice recognition
+│   │   ├── useSettings.ts    # Settings state management
+│   │   ├── useVoiceInput.ts  # Voice recognition + Gemini integration
+│   │   ├── useMood.ts        # Mood state management
+│   │   ├── usePetDrag.ts     # Drag & drop with mouse events
+│   │   ├── useKeyboardShortcuts.ts  # V,T,D,L,C,S key handlers
+│   │   └── useStatChangeDetector.ts # Stat change animations
 │   ├── services/
-│   │   ├── PetBehavior.ts    # Pet state machine
-│   │   ├── GeminiService.ts  # AI integration
-│   │   └── SpeechRecognitionService.ts
-│   └── types/
+│   │   ├── PetBehavior.ts    # Pet state machine (30+ states)
+│   │   ├── MoodService.ts    # Mood persistence & decay logic
+│   │   ├── GeminiService.ts  # AI integration with SSE streaming
+│   │   ├── SpeechRecognitionService.ts  # Web Speech API wrapper
+│   │   ├── SettingsService.ts # Settings persistence
+│   │   ├── SpriteLoader.ts   # Sprite sheet loading
+│   │   ├── SpriteRenderer.ts # Canvas sprite drawing
+│   │   └── PermissionService.ts # macOS permissions
+│   └── types/                # TypeScript type definitions
 ├── src-tauri/                # Rust backend
-│   └── src/lib.rs            # Tauri commands
-├── public/sprites/           # Sprite assets
+│   └── src/lib.rs            # Tauri commands (settings, chat history, encryption)
+├── public/sprites/           # Sprite assets (19 animations)
+├── scripts/                  # Build & release scripts
 └── docs/                     # Documentation
-    └── PRD.md                # Product requirements
+    └── prd.md                # Product requirements
 ```
 
 ## Roadmap
 
 ### Completed
 - [x] Desktop pet with 19 animations
-- [x] Voice input + Gemini AI
-- [x] Settings system
-- [x] Glassmorphism speech bubble
+- [x] Voice input + Gemini AI with SSE streaming
+- [x] Settings system with encrypted API key storage
+- [x] Glassmorphism speech bubble with typewriter effect
 - [x] Pet mood system (happiness, energy, sleep cycles)
 - [x] Interaction cooldowns with rejection feedback
 - [x] Mood-based idle animations (ecstatic, happy, sad, angry)
 - [x] Interaction animations (eat, dance, yawn, wake, talk)
 - [x] Happiness & Energy bar UI
+- [x] Pet color customization (tint + bloom effects)
+- [x] Run/walk/tired behavior based on energy level
+- [x] Grumpy wake behavior when disturbed during sleep
+- [x] Realtime energy restoration
+- [x] Persistent chat history across sessions
+- [x] macOS distribution (GitHub Releases + CI/CD)
 
 ### In Progress
-- [x] Pet color customization (tint + bloom effects)
 - [ ] Multiple pet skins (sprite sheets)
 
 ### Planned
-- [x] macOS distribution (GitHub Releases + CI/CD)
 - [ ] macOS code signing (requires $99/year Apple Developer account)
 - [ ] Windows/Linux support
+- [ ] Voice control for system commands (open apps, etc.)
 
 ### Future Vision: Tiny Assistant 🤖
 Transform your pet into a helpful desktop companion that can:

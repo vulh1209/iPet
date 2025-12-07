@@ -115,10 +115,12 @@ Pet appears and moves on screen
 - [x] Auto-cleanup old messages
 
 ### Phase 3.5: Gemini AI Integration (Complete)
-- [x] Gemini API (gemini-2.0-flash-lite)
+- [x] Gemini API (gemini-2.5-flash with SSE streaming)
 - [x] Personality system prompts
 - [x] Short responses (MAX 3 words + emojis)
 - [x] Temperature 0.9 for creative responses
+- [x] Typewriter effect for responses
+- [x] Speaker colors for visual distinction
 
 ### Phase 3.6: Speech Bubble UI (Complete)
 - [x] Magical Glass Aurora speech bubble
@@ -171,21 +173,55 @@ Pet appears and moves on screen
 - [x] Fix double subtraction in bounds calculation
 - [x] Sync mood state immediately after PetBehavior creation
 
-### Phase 4: Polish & Distribution
-- [ ] Error handling
-- [ ] macOS code signing
-- [ ] DMG packaging
-- [ ] GitHub releases
+### Phase 3.11: Advanced Movement (Complete)
+- [x] Run/walk/tired behavior based on energy level
+- [x] State-based movement distance
+- [x] Realtime energy restoration during idle
+
+### Phase 3.12: Enhanced Voice & AI (Complete)
+- [x] Upgraded to Gemini 2.5 Flash
+- [x] SSE streaming for real-time responses
+- [x] Typewriter effect for speech bubble text
+- [x] Speaker colors (user vs pet)
+- [x] Grumpy wake behavior when disturbed during sleep
+
+### Phase 3.13: Security & Persistence (Complete)
+- [x] Encrypted API key storage (AES-256-GCM)
+- [x] Machine-specific key derivation (username + hostname)
+- [x] Persistent chat history (~/.ipet/chat_history.json)
+- [x] Backward compatible with plaintext API keys
+
+### Phase 3.14: Code Refactoring (Complete)
+- [x] Extract useKeyboardShortcuts hook
+- [x] Extract usePetDrag hook
+- [x] Extract SpeechBubble component
+- [x] Extract SpriteRenderer service
+- [x] Pet.tsx reduced by 37% (490 → 309 lines)
+
+### Phase 3.15: Pet Customization (Complete)
+- [x] Color tint presets (Original, Pink, Mint, Golden, Purple, Coral)
+- [x] Custom color picker with hex input
+- [x] Bloom/glow effect (toggleable)
+- [x] Real-time preview with live reload
+
+### Phase 4: Polish & Distribution (In Progress)
+- [x] DMG packaging (Intel + Apple Silicon)
+- [x] GitHub releases with CI/CD
+- [x] Build scripts for architecture detection
+- [ ] macOS code signing ($99/year Apple Developer)
+- [ ] Windows/Linux support
 
 ---
 
 ## Confirmed Decisions
-- **Gemini model**: gemini-2.0-flash-lite
+- **Gemini model**: gemini-2.5-flash (with SSE streaming)
 - **Response style**: MAX 3 words + 1-2 cute emojis (💕✨🌟💖🎀🌸😊🥰💫🐾)
 - **Settings**: System tray icon → Settings panel
 - **Sprite style**: Cartoon/Vector (kawaii slime)
 - **Tech stack**: Tauri 2.0 + React + TypeScript
 - **Voice activation**: Press "V" key
+- **Security**: AES-256-GCM encrypted API key storage
+- **Persistence**: Chat history at ~/.ipet/chat_history.json
 
 ---
 
