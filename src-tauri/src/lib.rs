@@ -8,6 +8,94 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
+// Encryption imports
+use aes_gcm::{
+    aead::{Aead, KeyInit},
+    Aes256Gcm, Nonce,
+};
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+use rand::Rng;
+
+// Encryption constants
+const NONCE_SIZE: usize = 12;
+
+/// Derive a 32-byte key from machine-specific data
+fn derive_key() -> [u8; 32] {
+    let username = std::env::var("USER").unwrap_or_else(|_| "ipet".to_string());
+    let hostname = hostname::get()
+        .map(|h| h.to_string_lossy().to_string())
+        .unwrap_or_else(|_| "localhost".to_string());
+
+    // Create a deterministic key from username + hostname
+    let seed = format!("ipet_{}_{}_secret_key_v1", username, hostname);
+    let mut key = [0u8; 32];
+
+    // Simple key derivation (hash the seed)
+    for (i, byte) in seed.bytes().cycle().take(32).enumerate() {
+        key[i] = byte.wrapping_mul((i + 1) as u8);
+    }
+
+    key
+}
+
+/// Encrypt a string using AES-256-GCM
+fn encrypt_string(plaintext: &str) -> Result<String, String> {
+    if plaintext.is_empty() {
+        return Ok(String::new());
+    }
+
+    let key = derive_key();
+    let cipher = Aes256Gcm::new_from_slice(&key)
+        .map_err(|e| format!("Failed to create cipher: {}", e))?;
+
+    // Generate random nonce
+    let mut nonce_bytes = [0u8; NONCE_SIZE];
+    rand::rng().fill(&mut nonce_bytes);
+    let nonce = Nonce::from_slice(&nonce_bytes);
+
+    // Encrypt
+    let ciphertext = cipher
+        .encrypt(nonce, plaintext.as_bytes())
+        .map_err(|e| format!("Encryption failed: {}", e))?;
+
+    // Combine nonce + ciphertext and encode as base64
+    let mut combined = nonce_bytes.to_vec();
+    combined.extend(ciphertext);
+
+    Ok(BASE64.encode(&combined))
+}
+
+/// Decrypt a base64-encoded encrypted string
+fn decrypt_string(encrypted: &str) -> Result<String, String> {
+    if encrypted.is_empty() {
+        return Ok(String::new());
+    }
+
+    let key = derive_key();
+    let cipher = Aes256Gcm::new_from_slice(&key)
+        .map_err(|e| format!("Failed to create cipher: {}", e))?;
+
+    // Decode base64
+    let combined = BASE64.decode(encrypted)
+        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+
+    if combined.len() < NONCE_SIZE {
+        return Err("Invalid encrypted data".to_string());
+    }
+
+    // Split nonce and ciphertext
+    let (nonce_bytes, ciphertext) = combined.split_at(NONCE_SIZE);
+    let nonce = Nonce::from_slice(nonce_bytes);
+
+    // Decrypt
+    let plaintext = cipher
+        .decrypt(nonce, ciphertext)
+        .map_err(|_| "Decryption failed - key may have changed".to_string())?;
+
+    String::from_utf8(plaintext)
+        .map_err(|e| format!("Invalid UTF-8: {}", e))
+}
+
 // Settings types
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PersonalityConfig {
@@ -126,6 +214,11 @@ fn get_mood_path() -> PathBuf {
     get_settings_dir().join("mood.json")
 }
 
+// Get chat history file path (~/.ipet/chat_history.json)
+fn get_chat_history_path() -> PathBuf {
+    get_settings_dir().join("chat_history.json")
+}
+
 #[tauri::command]
 fn load_settings() -> Result<AppSettings, String> {
     let path = get_settings_path();
@@ -138,8 +231,21 @@ fn load_settings() -> Result<AppSettings, String> {
     let content = fs::read_to_string(&path)
         .map_err(|e| format!("Failed to read settings: {}", e))?;
 
-    let settings: AppSettings = serde_json::from_str(&content)
+    let mut settings: AppSettings = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse settings: {}", e))?;
+
+    // Decrypt API key if it's encrypted (non-empty and valid base64)
+    if !settings.gemini_api_key.is_empty() {
+        match decrypt_string(&settings.gemini_api_key) {
+            Ok(decrypted) => {
+                settings.gemini_api_key = decrypted;
+            }
+            Err(_) => {
+                // If decryption fails, it might be a plaintext key from old version
+                // Keep it as-is for backward compatibility
+            }
+        }
+    }
 
     Ok(settings)
 }
@@ -155,7 +261,13 @@ fn save_settings(settings: AppSettings) -> Result<(), String> {
             .map_err(|e| format!("Failed to create settings directory: {}", e))?;
     }
 
-    let content = serde_json::to_string_pretty(&settings)
+    // Encrypt API key before saving
+    let mut settings_to_save = settings;
+    if !settings_to_save.gemini_api_key.is_empty() {
+        settings_to_save.gemini_api_key = encrypt_string(&settings_to_save.gemini_api_key)?;
+    }
+
+    let content = serde_json::to_string_pretty(&settings_to_save)
         .map_err(|e| format!("Failed to serialize settings: {}", e))?;
 
     fs::write(&path, content)
@@ -198,6 +310,42 @@ fn save_mood(mood: PetMoodState) -> Result<(), String> {
 
     fs::write(&path, content)
         .map_err(|e| format!("Failed to write mood: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+fn load_chat_history() -> Result<Vec<serde_json::Value>, String> {
+    let path = get_chat_history_path();
+
+    if !path.exists() {
+        return Ok(vec![]);
+    }
+
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read chat history: {}", e))?;
+
+    let history: Vec<serde_json::Value> = serde_json::from_str(&content)
+        .map_err(|e| format!("Failed to parse chat history: {}", e))?;
+
+    Ok(history)
+}
+
+#[tauri::command]
+fn save_chat_history(history: Vec<serde_json::Value>) -> Result<(), String> {
+    let dir = get_settings_dir();
+    let path = get_chat_history_path();
+
+    if !dir.exists() {
+        fs::create_dir_all(&dir)
+            .map_err(|e| format!("Failed to create directory: {}", e))?;
+    }
+
+    let content = serde_json::to_string_pretty(&history)
+        .map_err(|e| format!("Failed to serialize chat history: {}", e))?;
+
+    fs::write(&path, content)
+        .map_err(|e| format!("Failed to write chat history: {}", e))?;
 
     Ok(())
 }
@@ -261,6 +409,8 @@ pub fn run() {
             save_settings,
             load_mood,
             save_mood,
+            load_chat_history,
+            save_chat_history,
             open_settings_window,
             close_settings_window
         ])

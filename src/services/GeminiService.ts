@@ -1,3 +1,4 @@
+import { invoke } from '@tauri-apps/api/core';
 import { settingsService } from './SettingsService';
 import { getPersonalityTraits } from '../types/settings';
 
@@ -21,8 +22,38 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/
 export class GeminiService {
   private static instance: GeminiService;
   private conversationHistory: ChatMessage[] = [];
+  private initialized = false;
 
   private constructor() {}
+
+  /**
+   * Initialize service by loading persisted chat history
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) return;
+
+    try {
+      const history = await invoke<ChatMessage[]>('load_chat_history');
+      this.conversationHistory = history;
+      this.initialized = true;
+      console.log(`Loaded ${history.length} chat messages from disk`);
+    } catch (error) {
+      console.error('Failed to load chat history:', error);
+      this.conversationHistory = [];
+      this.initialized = true;
+    }
+  }
+
+  /**
+   * Save chat history to disk
+   */
+  private async saveHistory(): Promise<void> {
+    try {
+      await invoke('save_chat_history', { history: this.conversationHistory });
+    } catch (error) {
+      console.error('Failed to save chat history:', error);
+    }
+  }
 
   static getInstance(): GeminiService {
     if (!GeminiService.instance) {
@@ -36,6 +67,9 @@ export class GeminiService {
    * Uses personality from settings for context
    */
   async chat(userMessage: string): Promise<GeminiResponse> {
+    // Ensure history is loaded before chatting
+    await this.initialize();
+
     const settings = await settingsService.loadSettings();
     const apiKey = settings.gemini_api_key;
 
@@ -58,6 +92,9 @@ export class GeminiService {
         if (this.conversationHistory.length > 20) {
           this.conversationHistory = this.conversationHistory.slice(-20);
         }
+
+        // Persist to disk
+        await this.saveHistory();
       }
 
       return response;
@@ -73,8 +110,9 @@ export class GeminiService {
   /**
    * Clear conversation history
    */
-  clearHistory(): void {
+  async clearHistory(): Promise<void> {
     this.conversationHistory = [];
+    await this.saveHistory();
   }
 
   /**
