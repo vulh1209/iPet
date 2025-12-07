@@ -49,11 +49,13 @@ export function Settings() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<SectionId | null>('api');
 
+  // Sync formData with settings when settings are loaded/reloaded
+  // Use JSON.stringify to detect deep changes in settings object
   useEffect(() => {
-    if (settings && !formData) {
+    if (settings) {
       setFormData(settings);
     }
-  }, [settings, formData]);
+  }, [JSON.stringify(settings)]);
 
   const toggleSection = (id: SectionId) => {
     setExpandedSection(expandedSection === id ? null : id);

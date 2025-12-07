@@ -22,7 +22,9 @@ export function useSettings(): UseSettingsReturn {
 
   // Load settings on mount and listen for changes from other windows
   useEffect(() => {
-    loadSettings();
+    // Force reload from file on mount to ensure fresh data
+    // This is important when Settings window opens - it needs latest from disk
+    loadSettings(true);
 
     // Listen for settings-changed event from other windows (e.g., Settings window)
     const unlisten = listen<AppSettings>('settings-changed', (event) => {
@@ -36,11 +38,13 @@ export function useSettings(): UseSettingsReturn {
     };
   }, []);
 
-  const loadSettings = async () => {
+  const loadSettings = async (forceReload = false) => {
     setLoading(true);
     setError(null);
     try {
-      const loaded = await settingsService.loadSettings();
+      // Always force reload to get fresh data from file
+      // This ensures Settings window shows correct values when opened
+      const loaded = await settingsService.loadSettings(forceReload);
       setSettings(loaded);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load settings');

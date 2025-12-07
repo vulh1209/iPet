@@ -20,14 +20,16 @@ use rand::Rng;
 const NONCE_SIZE: usize = 12;
 
 /// Derive a 32-byte key from machine-specific data
+/// Uses only USER env var for stability (hostname can change with network)
 fn derive_key() -> [u8; 32] {
     let username = std::env::var("USER").unwrap_or_else(|_| "ipet".to_string());
-    let hostname = hostname::get()
-        .map(|h| h.to_string_lossy().to_string())
-        .unwrap_or_else(|_| "localhost".to_string());
+    // Don't use hostname - it can change based on network connection on macOS
+    // This makes the key stable across app restarts
 
-    // Create a deterministic key from username + hostname
-    let seed = format!("ipet_{}_{}_secret_key_v1", username, hostname);
+    // Create a deterministic key from username only
+    let seed = format!("ipet_{}_secret_key_v2", username);
+    println!("[Crypto] Deriving key from seed: {}", seed);
+
     let mut key = [0u8; 32];
 
     // Simple key derivation (hash the seed)
@@ -251,17 +253,35 @@ fn load_settings() -> Result<AppSettings, String> {
     let mut settings: AppSettings = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse settings: {}", e))?;
 
-    // Decrypt API key if it's encrypted (non-empty and valid base64)
+    // Try to decrypt API key - it might be encrypted or plaintext
     if !settings.gemini_api_key.is_empty() {
-        match decrypt_string(&settings.gemini_api_key) {
-            Ok(decrypted) => {
-                settings.gemini_api_key = decrypted;
-            }
-            Err(_) => {
-                // If decryption fails, it might be a plaintext key from old version
-                // Keep it as-is for backward compatibility
+        let stored_key = settings.gemini_api_key.clone();
+
+        // Check if it looks like a Gemini API key (starts with "AI")
+        if stored_key.starts_with("AI") {
+            // It's already plaintext, keep as-is
+            println!("[Settings] API key is plaintext: {} chars", stored_key.len());
+        } else {
+            // Try to decrypt
+            match decrypt_string(&stored_key) {
+                Ok(decrypted) if !decrypted.is_empty() => {
+                    println!("[Settings] Decrypted API key: {} chars", decrypted.len());
+                    settings.gemini_api_key = decrypted;
+                }
+                Ok(_) => {
+                    // Decrypted to empty string - something wrong
+                    println!("[Settings] Decrypt returned empty, clearing key");
+                    settings.gemini_api_key = String::new();
+                }
+                Err(e) => {
+                    // Decryption failed - key might be corrupted or from different machine
+                    println!("[Settings] Decrypt failed: {}. Clearing corrupted key.", e);
+                    settings.gemini_api_key = String::new();
+                }
             }
         }
+    } else {
+        println!("[Settings] API key is empty in file");
     }
 
     Ok(settings)
