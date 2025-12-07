@@ -163,6 +163,14 @@ Pet appears and moves on screen
 - [x] Force wake up when pet is dragged while sleeping
 - [x] Keyboard shortcuts feedback (D, T, L keys)
 
+### Phase 3.10: Movement & Boundary Fixes (Complete)
+- [x] Fix macOS Retina display: convert physical pixels to logical points
+- [x] Fix pet going off-screen with clampToScreen() in all movement states
+- [x] Fix pet stuck in wandering: detect edge hit → transition to idle
+- [x] Fix keyboard shortcuts blocking system shortcuts (Cmd+C, etc.)
+- [x] Fix double subtraction in bounds calculation
+- [x] Sync mood state immediately after PetBehavior creation
+
 ### Phase 4: Polish & Distribution
 - [ ] Error handling
 - [ ] macOS code signing
@@ -234,3 +242,19 @@ STRICT RULES:
 - Max Tokens: 30
 - Top P: 0.9
 - Top K: 40
+
+---
+
+## Technical Notes
+
+### Screen Bounds (macOS)
+- **Retina Display**: `monitor.size()` returns physical pixels (e.g., 2880x1800)
+- **Tauri Positioning**: Uses logical points (e.g., 1440x900)
+- **Solution**: Divide by `scale_factor()` to convert physical → logical
+- **Bounds Calculation**: `screenBounds = { width: logicalWidth - WINDOW_SIZE, height: logicalHeight - WINDOW_SIZE }`
+- **Pet Movement**: Pet position is relative to window (0,0 to screenBounds)
+
+### Keyboard Shortcuts
+- App shortcuts (V, T, D, L, C, S) only trigger when no modifier keys pressed
+- System shortcuts (Cmd+C, Cmd+V, etc.) pass through normally
+- Check `e.metaKey || e.ctrlKey || e.altKey` before handling
