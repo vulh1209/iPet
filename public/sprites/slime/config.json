@@ -20,6 +20,12 @@
       "frameDuration": 150,
       "loop": true
     },
+    "idle_tired": {
+      "file": "idle_tired.png",
+      "frames": 4,
+      "frameDuration": 350,
+      "loop": true
+    },
     "idle_blink": {
       "file": "idle_blink.png",
       "frames": 3,
@@ -43,6 +49,42 @@
       "frames": 4,
       "frameDuration": 200,
       "loop": true
+    },
+    "run": {
+      "file": "run.png",
+      "frames": 4,
+      "frameDuration": 100,
+      "loop": true
+    },
+    "run_start": {
+      "file": "run_start.png",
+      "frames": 3,
+      "frameDuration": 130,
+      "loop": false
+    },
+    "run_stop": {
+      "file": "run_stop.png",
+      "frames": 4,
+      "frameDuration": 125,
+      "loop": false
+    },
+    "stumble": {
+      "file": "stumble.png",
+      "frames": 3,
+      "frameDuration": 200,
+      "loop": false
+    },
+    "cry": {
+      "file": "cry.png",
+      "frames": 4,
+      "frameDuration": 250,
+      "loop": true
+    },
+    "hurt": {
+      "file": "sad.png",
+      "frames": 4,
+      "frameDuration": 200,
+      "loop": false
     },
     "sleep": {
       "file": "sleep.png",

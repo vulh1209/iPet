@@ -209,6 +209,13 @@ export function Pet() {
     behaviorRef.current?.setEnergy(energy);
   }, [isSleeping, happiness, energy]);
 
+  // Set up hurt callback (when pet runs into screen edge)
+  useEffect(() => {
+    behaviorRef.current?.setOnHurtCallback(() => {
+      triggerInteraction('hurt');
+    });
+  }, [triggerInteraction]);
+
   // Trigger voice chat interaction and talk animation when we get a response
   useEffect(() => {
     if (response?.text) {

@@ -144,4 +144,11 @@ export const INTERACTIONS: Record<string, Interaction> = {
     energyChange: -5,        // Increased penalty from -3 → -5
     cooldownMs: 0,           // No cooldown - each drag-drop costs stats
   },
+  hurt: {
+    id: 'hurt',
+    name: 'Hurt',
+    happinessChange: -10,    // Running into wall hurts!
+    energyChange: -5,        // Also loses some energy
+    cooldownMs: 0,           // No cooldown - each collision counts
+  },
 };

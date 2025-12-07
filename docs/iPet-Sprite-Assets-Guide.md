@@ -1143,4 +1143,385 @@ Add these to `config.json` after creating the sprites:
 
 ---
 
+## 🏃 Run & Transition Animations (Phase 6)
+
+Animations mới để pet di chuyển mượt mà hơn với smooth transitions.
+
+---
+
+### 20. run.png
+
+**File:** `run.png`
+**Path:** `public/sprites/slime/run.png`
+**Size:** 512×128px (4 frames)
+
+```
+Create a horizontal sprite sheet of a super cute chibi slime character RUNNING/FAST BOUNCING.
+
+=== LAYOUT ===
+- Exactly 4 frames in a horizontal row
+- Total image: 512×128 pixels
+- Each frame: 128×128 pixels
+- Transparent PNG background
+
+=== CHARACTER DESIGN (Chibi Cute Style) ===
+- Body: Round squishy blob/slime, VERY bouncy and energetic!
+- Color: Soft pastel blue #7EC8E3 with lighter highlight #B5E4F7
+- Eyes: Excited wide eyes, sparkly, determined expression
+- Mouth: Big happy open smile, "wheee!" expression
+- Cheeks: Extra pink blush marks from excitement
+- Character facing RIGHT (running right direction)
+- FAST bouncing locomotion - higher jumps, more stretched!
+- Floating effects: Speed lines, motion blur, small sparkles
+
+=== FRAME SEQUENCE (left to right) ===
+Frame 1: DEEP squish against ground, eyes focused, preparing for big hop
+Frame 2: LAUNCHING high into air, body very stretched tall, excited eyes, speed lines appear
+Frame 3: HIGH mid-air bounce, perfectly round but tilted forward, biggest smile, motion blur
+Frame 4: FAST landing squish, very flat impact, happy energetic face, small dust cloud
+
+=== STYLE ===
+- Ultra cute Japanese chibi/kawaii aesthetic
+- Show FAST, ENERGETIC bouncy movement
+- More exaggerated than walk - higher, faster, stretchier!
+- Add speed lines and motion effects
+- Soft pastel colors throughout
+- Should feel like pet is zooming happily!
+```
+
+---
+
+### 21. run_start.png
+
+**File:** `run_start.png`
+**Path:** `public/sprites/slime/run_start.png`
+**Size:** 384×128px (3 frames)
+
+```
+Create a horizontal sprite sheet of a super cute chibi slime character ACCELERATING from walk to run.
+
+=== LAYOUT ===
+- Exactly 3 frames in a horizontal row
+- Total image: 384×128 pixels
+- Each frame: 128×128 pixels
+- Transparent PNG background
+
+=== CHARACTER DESIGN (Chibi Cute Style) ===
+- Body: Round squishy blob/slime, building up speed
+- Color: Soft pastel blue #7EC8E3 with lighter highlight #B5E4F7
+- Eyes: Transitioning from calm to excited, getting sparkly
+- Mouth: From gentle smile to excited open smile
+- Cheeks: Soft pink blush marks getting brighter
+- Character facing RIGHT, gaining momentum
+- Show acceleration - body leans forward slightly
+
+=== FRAME SEQUENCE (left to right) ===
+Frame 1: Walking pace, eyes widening with anticipation, slight forward lean starting, "ooh!" expression
+Frame 2: Picking up speed! Body stretches forward, eyes excited, small speed lines appear, building energy
+Frame 3: Almost at full run speed, big excited eyes with sparkles, mouth open "wheee!", ready to zoom
+
+=== STYLE ===
+- Ultra cute Japanese chibi/kawaii aesthetic
+- Show acceleration physics - forward lean, stretch
+- Transition from calm walk to energetic run
+- Soft pastel colors with increasing energy
+- Should feel like exciting speed-up moment!
+```
+
+---
+
+### 22. run_stop.png
+
+**File:** `run_stop.png`
+**Path:** `public/sprites/slime/run_stop.png`
+**Size:** 512×128px (4 frames)
+
+```
+Create a horizontal sprite sheet of a super cute chibi slime character SLOWING DOWN from running.
+
+=== LAYOUT ===
+- Exactly 4 frames in a horizontal row
+- Total image: 512×128 pixels
+- Each frame: 128×128 pixels
+- Transparent PNG background
+
+=== CHARACTER DESIGN (Chibi Cute Style) ===
+- Body: Round squishy blob/slime, decelerating from fast movement
+- Color: Soft pastel blue #7EC8E3 with lighter highlight #B5E4F7
+- Eyes: Transitioning from excited to calm
+- Mouth: From open excited to gentle smile
+- Cheeks: Soft pink blush marks
+- Character facing RIGHT but slowing down
+- Show momentum - body leans backward slightly when braking
+
+=== FRAME SEQUENCE (left to right) ===
+Frame 1: Still moving fast, slight backward lean starting, eyes still excited, speed lines fading
+Frame 2: Medium speed, body squishing from braking, eyes transitioning to calm, small skid marks
+Frame 3: Slow bounce, body wobbling from momentum, content expression, almost stopped
+Frame 4: Final small hop, settling into idle pose, happy relaxed face, "phew!" expression
+
+=== STYLE ===
+- Ultra cute Japanese chibi/kawaii aesthetic
+- Show deceleration physics - backward lean, wobble
+- Transition from energetic to calm
+- Soft pastel colors
+- Should feel like smooth, natural stop
+```
+
+---
+
+### 23. stumble.png
+
+**File:** `stumble.png`
+**Path:** `public/sprites/slime/stumble.png`
+**Size:** 384×128px (3 frames)
+
+```
+Create a horizontal sprite sheet of a super cute chibi slime character STUMBLING/TRIPPING animation.
+
+=== LAYOUT ===
+- Exactly 3 frames in a horizontal row
+- Total image: 384×128 pixels
+- Each frame: 128×128 pixels
+- Transparent PNG background
+
+=== CHARACTER DESIGN (Chibi Cute Style) ===
+- Body: Round squishy blob/slime, losing balance
+- Color: Soft pastel blue #7EC8E3 with lighter highlight #B5E4F7
+- Eyes: Surprised/alarmed (O_O) → dizzy swirls (@_@)
+- Mouth: Surprised "o!" → worried wavy line
+- Cheeks: Soft pink blush marks with sweat drop
+- Character facing RIGHT but tumbling
+- Floating effects: Impact stars, sweat drops, "!" mark
+
+=== FRAME SEQUENCE (left to right) ===
+Frame 1: IMPACT moment! Eyes wide (O O), body compressed from hitting wall, "!" appears, surprise
+Frame 2: Bouncing back from impact, body stretched weird shape, dizzy swirls starting, stars appear
+Frame 3: Wobbling off-balance, body tilted, full dizzy eyes (@_@), about to fall, sweat drops
+
+=== STYLE ===
+- Ultra cute Japanese chibi/kawaii aesthetic
+- Still ADORABLE even when stumbling
+- Comedy physics - exaggerated impact and wobble
+- Soft pastel colors
+- Should trigger "oh no poor baby!" reaction
+```
+
+---
+
+### 24. cry.png
+
+**File:** `cry.png`
+**Path:** `public/sprites/slime/cry.png`
+**Size:** 512×128px (4 frames)
+
+```
+Create a horizontal sprite sheet of a super cute chibi slime character CRYING animation.
+
+=== LAYOUT ===
+- Exactly 4 frames in a horizontal row
+- Total image: 512×128 pixels
+- Each frame: 128×128 pixels
+- Transparent PNG background
+
+=== CHARACTER DESIGN (Chibi Cute Style) ===
+- Body: Round squishy blob/slime, trembling and shaking
+- Color: Soft pastel blue #7EC8E3 with lighter highlight #B5E4F7 (slightly muted from sadness)
+- Eyes: Big watery eyes with tears streaming down, or squeezed shut crying (;_;) (T_T)
+- Mouth: Wide open crying wail, or trembling frown
+- Cheeks: Extra pink from crying
+- Character facing RIGHT
+- Floating effects: Multiple teardrops 💧💧, sad steam puffs, maybe small pain star from impact
+
+=== FRAME SEQUENCE (left to right) ===
+Frame 1: Eyes squeezed shut (>_<), tears starting, mouth open crying "wahhh!", body trembles
+Frame 2: Big tears streaming down (T_T), sobbing expression, body shakes left, teardrop flies left
+Frame 3: Still crying but slightly calmer, body shakes right, tears continuing, sniffling
+Frame 4: Winding down cry, eyes still watery (;_;), small sniff, last teardrop, starting to recover
+
+=== STYLE ===
+- Ultra cute Japanese chibi/kawaii aesthetic
+- ADORABLE crying - must make users feel "oh no poor baby, I'm sorry!"
+- Exaggerated anime-style tears
+- Still cute even when upset (not ugly crying)
+- Soft pastel colors
+- Should trigger protective/apologetic feelings in users
+```
+
+---
+
+## 📊 Run & Transition Summary Table
+
+| # | Filename | Frames | Dimensions | Trigger |
+|---|----------|--------|------------|---------|
+| 20 | `run.png` | 4 | 512×128 | Happiness > 60 while moving |
+| 21 | `run_start.png` | 3 | 384×128 | Walk → Run transition |
+| 22 | `run_stop.png` | 4 | 512×128 | Run → Idle transition |
+| 23 | `stumble.png` | 3 | 384×128 | Hit screen edge while running |
+| 24 | `cry.png` | 4 | 512×128 | After stumble |
+
+---
+
+## 📝 Quick Reference Prompts (Run & Transitions)
+
+| File | Short Prompt |
+|------|--------------|
+| `run.png` | `Chibi kawaii blue slime RUNNING sprite, 4 frames 512×128px, FAST bouncing. Pastel blue #7EC8E3, excited sparkly eyes, big smile. Frames: deep squish→launch high with speed lines→high mid-air→fast landing with dust. Transparent PNG, zooming energy.` |
+| `run_start.png` | `Chibi kawaii blue slime ACCELERATING sprite, 3 frames 384×128px, walk to run. Pastel blue #7EC8E3, eyes getting sparkly. Frames: forward lean "ooh!"→speed lines building→almost running "wheee!". Transparent PNG, exciting speed-up.` |
+| `run_stop.png` | `Chibi kawaii blue slime SLOWING DOWN sprite, 4 frames 512×128px, decelerating. Pastel blue #7EC8E3, eyes calming. Frames: backward lean→braking squish→slow wobble→settling "phew!". Transparent PNG, smooth stop.` |
+| `stumble.png` | `Chibi kawaii blue slime STUMBLING sprite, 3 frames 384×128px, hitting wall. Pastel blue #7EC8E3, surprised eyes (O_O)→dizzy (@_@). Frames: impact "!"→bounce back stars→wobble dizzy. Transparent PNG, adorable oops.` |
+| `cry.png` | `Chibi kawaii blue slime CRYING sprite, 4 frames 512×128px, sobbing. Pastel blue #7EC8E3, big teary eyes (T_T). Frames: eyes shut "wahhh!"→tears streaming shake left→shake right sniffling→calming down (;_;). Transparent PNG, adorable sad.` |
+
+---
+
+## ⚙️ Config Entries (Run & Transitions)
+
+```json
+"run": {
+  "file": "run.png",
+  "frames": 4,
+  "frameDuration": 100,
+  "loop": true
+},
+"run_start": {
+  "file": "run_start.png",
+  "frames": 3,
+  "frameDuration": 130,
+  "loop": false
+},
+"run_stop": {
+  "file": "run_stop.png",
+  "frames": 4,
+  "frameDuration": 125,
+  "loop": false
+},
+"stumble": {
+  "file": "stumble.png",
+  "frames": 3,
+  "frameDuration": 200,
+  "loop": false
+},
+"cry": {
+  "file": "cry.png",
+  "frames": 4,
+  "frameDuration": 250,
+  "loop": true
+}
+```
+
+---
+
+## 😴 Tired State Animations (Phase 7)
+
+Animations cho trạng thái mệt mỏi khi energy thấp.
+
+---
+
+### 25. idle_tired.png
+
+**File:** `idle_tired.png`
+**Path:** `public/sprites/slime/idle_tired.png`
+**Size:** 512×128px (4 frames)
+
+```
+Create a horizontal sprite sheet of a super cute chibi slime character in TIRED/DROWSY idle state.
+
+=== LAYOUT ===
+- Exactly 4 frames in a horizontal row
+- Total image: 512×128 pixels
+- Each frame: 128×128 pixels
+- Transparent PNG background
+
+=== CHARACTER DESIGN (Chibi Cute Style) ===
+- Body: Round squishy blob/slime, slightly deflated/droopy from fatigue
+- Color: Soft pastel blue #7EC8E3 with lighter highlight #B5E4F7 (slightly desaturated)
+- Eyes: Half-closed droopy eyes (−_−), heavy eyelids, sleepy expression
+- Mouth: Small tired "haah" or gentle yawn expression
+- Cheeks: Soft pink blush marks
+- Character facing RIGHT
+- Floating effects: Small "Zzz" or drowsy sparkles, sweat drop optional
+- Body posture: Slightly slouched/sagging, less bouncy than normal
+
+=== FRAME SEQUENCE (left to right) ===
+Frame 1: Droopy idle, eyes half-closed (−_−), body slightly deflated, small sigh
+Frame 2: Slow blink starting, eyes closing more, tiny yawn forming, body sags a bit
+Frame 3: Eyes barely open (− −), head nodding down slightly, "zzz" appearing
+Frame 4: Catching self, eyes open a bit more (−_−), small shake, back to tired idle
+
+=== STYLE ===
+- Ultra cute Japanese chibi/kawaii aesthetic
+- Show FATIGUE without being sad - tired but still adorable!
+- Slow, heavy movements feel
+- Soft pastel colors (slightly muted)
+- Should trigger "poor baby needs rest" feeling
+- Different from sad - this is sleepy/exhausted, not unhappy
+```
+
+---
+
+## 📊 Tired State Summary Table
+
+| # | Filename | Frames | Dimensions | Trigger |
+|---|----------|--------|------------|---------|
+| 25 | `idle_tired.png` | 4 | 512×128 | Energy < 30, standing still |
+
+**Note:** `walk_tired.png` (already exists) is used when Energy < 30 while moving.
+
+---
+
+## 📝 Quick Reference Prompts (Tired State)
+
+| File | Short Prompt |
+|------|--------------|
+| `idle_tired.png` | `Chibi kawaii blue slime TIRED/DROWSY idle sprite, 4 frames 512×128px. Pastel blue #7EC8E3, half-closed droopy eyes (−_−), slight yawn. Frames: droopy idle→slow blink→eyes barely open "zzz"→catching self shake. Transparent PNG, sleepy but adorable.` |
+
+---
+
+## ⚙️ Config Entry (Tired State)
+
+```json
+"idle_tired": {
+  "file": "idle_tired.png",
+  "frames": 4,
+  "frameDuration": 350,
+  "loop": true
+}
+```
+
+**Note:** `frameDuration: 350` (slower than normal idle 200ms) để tạo cảm giác chậm chạp, mệt mỏi.
+
+---
+
+## 📋 Behavior Summary (All Energy Levels)
+
+| Energy Level | Idle Animation | Walk Animation | Can Run? | Speed | Distance |
+|--------------|----------------|----------------|----------|-------|----------|
+| 75+ (Hyperactive) | idle_ecstatic | walk/run | Yes | 100%/600% | 3x (240-450px) |
+| 55-75 (Energetic) | idle_happy | walk/run | Yes | 100%/600% | 3x (240-450px) |
+| 30-55 (Normal) | idle | walk | No | 100% | 1x (80-150px) |
+| <30 (Tired) | idle_tired | walk_tired | No | 60% | 0.5x (40-75px) |
+| <10 (Forced Sleep) | yawn → sleep | N/A | No | 0% | N/A |
+
+### Movement Distance Configuration
+
+Distance is determined dynamically based on pet state in `PetBehavior.ts`:
+
+```typescript
+// Base walk distance
+WANDER_DISTANCE_MIN = 80;  // pixels
+WANDER_DISTANCE_MAX = 150; // pixels
+
+// Multipliers
+RUN_DISTANCE_MULTIPLIER = 3.0;   // Run = 3x walk (240-450px)
+TIRED_DISTANCE_MULTIPLIER = 0.5; // Tired = 0.5x walk (40-75px)
+```
+
+| State | Multiplier | Distance Range |
+|-------|------------|----------------|
+| Tired (energy < 30) | 0.5x | 40-75px |
+| Walk (normal) | 1.0x | 80-150px |
+| Run (happiness > 60) | 3.0x | 240-450px |
+
+---
+
 *Generated for iPet Project - Desktop Pet Application*

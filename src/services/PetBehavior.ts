@@ -9,14 +9,19 @@ type BehaviorState =
   | 'landing'
   | 'listening'
   | 'rejecting'
-  | 'talking'      // When AI is responding
-  | 'eating'       // When eating treat
-  | 'dancing'      // When dance party
-  | 'yawning'      // Pre-sleep transition
-  | 'waking'       // Post-sleep transition
-  | 'grumpy_waking' // Angry wake when disturbed at low energy
-  | 'playing'      // When playing catch
-  | 'shaking';     // When being gently shaken
+  | 'talking'        // When AI is responding
+  | 'eating'         // When eating treat
+  | 'dancing'        // When dance party
+  | 'yawning'        // Pre-sleep transition
+  | 'waking'         // Post-sleep transition
+  | 'grumpy_waking'  // Angry wake when disturbed at low energy
+  | 'playing'        // When playing catch
+  | 'shaking'        // When being gently shaken
+  | 'accelerating'   // Walk → Run transition
+  | 'slowing_down'   // Run → Idle transition
+  | 'stumbling'      // Hit wall while running
+  | 'crying'         // After stumble
+  | 'hurt';          // Legacy hurt state (for backward compat)
 
 interface BehaviorResult {
   position: Position;
@@ -34,7 +39,6 @@ export class PetBehavior {
   private screenBounds: ScreenBounds;
   private direction: Direction = 'right';
   private isMoodSleeping: boolean = false; // Controlled by mood system
-  private isLowEnergy: boolean = false; // Energy < 20
   private isLowHappiness: boolean = false; // Happiness < 40
   private happiness: number = 50; // Current happiness level for mood-based animations
 
@@ -42,10 +46,30 @@ export class PetBehavior {
   private animationQueue: BehaviorState[] = [];
 
   private readonly WANDER_SPEED = 30; // pixels per second
+  private readonly RUN_SPEED = 180; // pixels per second (2x walk speed)
+  private readonly HAPPINESS_RUN_THRESHOLD = 60;
   private readonly PET_SIZE = 50;
   private readonly IDLE_MIN = 10000; // 10 seconds minimum
   private readonly IDLE_MAX = 20000; // 20 seconds maximum
   private readonly WANDER_CHANCE = 0.6;
+
+  // Tired state thresholds
+  private readonly TIRED_ENERGY_THRESHOLD = 30; // Energy < 30 = tired
+  private readonly TIRED_SPEED_MULTIPLIER = 0.6; // 60% speed when tired
+
+  // Wander distance configuration
+  private readonly WANDER_DISTANCE_MIN = 80; // Base walk distance min
+  private readonly WANDER_DISTANCE_MAX = 150; // Base walk distance max
+  private readonly RUN_DISTANCE_MULTIPLIER = 3.0; // Run = 3x walk distance
+  private readonly TIRED_DISTANCE_MULTIPLIER = 0.5; // Tired = 0.5x walk distance
+
+  // Track current energy level for tired animations
+  private energy: number = 50;
+
+  // Computed getter for tired state
+  private get isTired(): boolean {
+    return this.energy < this.TIRED_ENERGY_THRESHOLD;
+  }
 
   // Landing bounce physics
   private landingBaseY: number = 0;
@@ -62,9 +86,22 @@ export class PetBehavior {
   private readonly DANCE_DURATION = 6000; // ms - dance party duration (~7 loops)
   private readonly YAWN_DURATION = 1000; // ms - 4 frames * 250ms
   private readonly WAKE_DURATION = 800; // ms - 4 frames * 200ms
-  private readonly GRUMPY_WAKE_DURATION = 4000; // ms - angry animation when disturbed (4 seconds)
+  private readonly GRUMPY_WAKE_DURATION = 2000; // ms - angry animation when disturbed (4 seconds)
   private readonly PLAY_DURATION = 3000; // ms - playing catch animation
   private readonly SHAKE_DURATION = 800; // ms - gentle shake animation
+  private readonly HURT_DURATION = 1500; // ms - hurt/crying animation when hitting edge
+
+  // Smooth transition durations
+  private readonly ACCELERATE_DURATION = 400; // ms - walk → run
+  private readonly SLOW_DOWN_DURATION = 500; // ms - run → idle
+  private readonly STUMBLE_DURATION = 600; // ms - hit wall
+  private readonly CRY_DURATION = 2000; // ms - crying after stumble
+
+  // Track if we were running (for transitions)
+  private wasRunning: boolean = false;
+
+  // Callback for when pet gets hurt (to reduce happiness)
+  private onHurtCallback?: () => void;
 
   private readonly SPRING_STIFFNESS = 150;   // Slower oscillation
   private readonly SPRING_DAMPING = 5;       // Less damping = more bounces
@@ -120,6 +157,16 @@ export class PetBehavior {
         return this.handlePlayingState(deltaTime);
       case 'shaking':
         return this.handleShakingState(deltaTime);
+      case 'accelerating':
+        return this.handleAcceleratingState(deltaTime);
+      case 'slowing_down':
+        return this.handleSlowingDownState(deltaTime);
+      case 'stumbling':
+        return this.handleStumblingState(deltaTime);
+      case 'crying':
+        return this.handleCryingState(deltaTime);
+      case 'hurt':
+        return this.handleHurtState(deltaTime);
       default:
         return this.handleIdleState();
     }
@@ -154,10 +201,12 @@ export class PetBehavior {
 
   /**
    * Select the appropriate idle animation based on mood levels
-   * Priority: angry (low energy) > sad (low happiness) > ecstatic > happy > idle
+   * Priority: tired (low energy) > sad (low happiness) > ecstatic > happy > idle
+   * Note: angry is reserved for grumpy_waking state only
    */
   private selectIdleAnimation(): AnimationType {
-    if (this.isLowEnergy) return 'angry';
+    // Tired (low energy) - different from sad (low happiness)
+    if (this.isTired) return 'idle_tired';
     if (this.isLowHappiness) return 'sad';
     if (this.happiness >= 80) return 'idle_ecstatic';
     if (this.happiness >= 60) return 'idle_happy';
@@ -166,6 +215,11 @@ export class PetBehavior {
 
   private handleWanderingState(deltaTime: number): BehaviorResult {
     if (!this.targetPosition) {
+      // If was running, play slow down animation before idle
+      if (this.wasRunning) {
+        this.transitionTo('slowing_down');
+        return this.handleSlowingDownState(deltaTime);
+      }
       this.transitionTo('idle');
       return this.handleIdleState();
     }
@@ -174,9 +228,30 @@ export class PetBehavior {
     const dy = this.targetPosition.y - this.position.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    // Reached target
+    // Determine if should be running based on happiness AND energy
+    // Cannot run when tired!
+    const canRun = this.happiness > this.HAPPINESS_RUN_THRESHOLD && !this.isTired;
+
+    // Check for walk → run transition (only if not tired)
+    if (canRun && !this.wasRunning) {
+      this.transitionTo('accelerating');
+      return this.handleAcceleratingState(deltaTime);
+    }
+
+    // If currently running but became tired, slow down
+    if (this.wasRunning && this.isTired) {
+      this.transitionTo('slowing_down');
+      return this.handleSlowingDownState(deltaTime);
+    }
+
+    // Reached target or getting close
     if (distance < 5) {
       this.targetPosition = null;
+      // If was running, play slow down animation
+      if (this.wasRunning) {
+        this.transitionTo('slowing_down');
+        return this.handleSlowingDownState(deltaTime);
+      }
       this.transitionTo('idle');
       return {
         position: this.position,
@@ -185,20 +260,63 @@ export class PetBehavior {
       };
     }
 
+    // Determine speed based on current running state and tiredness
+    let speed = this.wasRunning ? this.RUN_SPEED : this.WANDER_SPEED;
+    if (this.isTired) {
+      speed *= this.TIRED_SPEED_MULTIPLIER; // Slow down when tired
+    }
+
     // Move towards target
-    const moveDistance = (this.WANDER_SPEED * deltaTime) / 1000;
+    const moveDistance = (speed * deltaTime) / 1000;
     const ratio = Math.min(moveDistance / distance, 1);
 
+    const newX = this.position.x + dx * ratio;
+    const newY = this.position.y + dy * ratio;
+
+    // Check if running into screen edge (only when running)
+    // This check must happen BEFORE slow down check to allow hitting edges
+    if (this.wasRunning) {
+      const hitLeftEdge = newX <= 0 && dx < 0;
+      const hitRightEdge = newX >= this.screenBounds.width - this.PET_SIZE && dx > 0;
+      const hitTopEdge = newY <= 0 && dy < 0;
+      const hitBottomEdge = newY >= this.screenBounds.height - this.PET_SIZE && dy > 0;
+
+      if (hitLeftEdge || hitRightEdge || hitTopEdge || hitBottomEdge) {
+        // Pet ran into edge - trigger stumble → cry sequence!
+        this.targetPosition = null;
+        this.transitionTo('stumbling');
+        // Call hurt callback to reduce happiness
+        if (this.onHurtCallback) {
+          this.onHurtCallback();
+        }
+        return this.handleStumblingState(deltaTime);
+      }
+    }
+
+    // If running and getting close to target (but not hitting edge), start slowing down
+    if (this.wasRunning && distance < 30) {
+      this.transitionTo('slowing_down');
+      return this.handleSlowingDownState(deltaTime);
+    }
+
     this.position = {
-      x: this.position.x + dx * ratio,
-      y: this.position.y + dy * ratio,
+      x: newX,
+      y: newY,
     };
 
     this.direction = dx > 0 ? 'right' : 'left';
 
+    // Choose walk animation based on energy level
+    let walkAnimation: AnimationType = 'walk';
+    if (this.wasRunning) {
+      walkAnimation = 'run';
+    } else if (this.isTired) {
+      walkAnimation = 'walk_tired';
+    }
+
     return {
       position: this.position,
-      animation: 'walk',
+      animation: walkAnimation,
       direction: this.direction,
     };
   }
@@ -410,6 +528,137 @@ export class PetBehavior {
     };
   }
 
+  private handleHurtState(_deltaTime: number): BehaviorResult {
+    // Legacy hurt state - kept for backward compatibility
+    if (this.stateTimer > this.HURT_DURATION) {
+      this.transitionTo('idle');
+      return this.handleIdleState();
+    }
+
+    const wobbleSpeed = 8;
+    const wobbleAmount = 2;
+    const wobbleOffset = Math.sin(this.stateTimer * wobbleSpeed / 1000 * Math.PI * 2) * wobbleAmount;
+
+    return {
+      position: { x: this.position.x + wobbleOffset, y: this.position.y },
+      animation: 'hurt',
+      direction: this.direction,
+    };
+  }
+
+  private handleAcceleratingState(_deltaTime: number): BehaviorResult {
+    // Walk → Run transition animation
+    if (this.stateTimer > this.ACCELERATE_DURATION) {
+      this.wasRunning = true;
+      this.transitionTo('wandering');
+      return this.handleWanderingState(_deltaTime);
+    }
+
+    // Gradually increase speed during acceleration
+    const progress = this.stateTimer / this.ACCELERATE_DURATION;
+    const currentSpeed = this.WANDER_SPEED + (this.RUN_SPEED - this.WANDER_SPEED) * progress;
+
+    // Continue moving toward target if exists
+    if (this.targetPosition) {
+      const dx = this.targetPosition.x - this.position.x;
+      const dy = this.targetPosition.y - this.position.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 5) {
+        const moveDistance = (currentSpeed * _deltaTime) / 1000;
+        const ratio = Math.min(moveDistance / distance, 1);
+        this.position = {
+          x: this.position.x + dx * ratio,
+          y: this.position.y + dy * ratio,
+        };
+        this.direction = dx > 0 ? 'right' : 'left';
+      }
+    }
+
+    return {
+      position: this.position,
+      animation: 'run_start',
+      direction: this.direction,
+    };
+  }
+
+  private handleSlowingDownState(_deltaTime: number): BehaviorResult {
+    // Run → Idle transition animation
+    if (this.stateTimer > this.SLOW_DOWN_DURATION) {
+      this.wasRunning = false;
+      this.transitionTo('idle');
+      return this.handleIdleState();
+    }
+
+    // Gradually decrease speed during deceleration
+    const progress = this.stateTimer / this.SLOW_DOWN_DURATION;
+    const currentSpeed = this.RUN_SPEED * (1 - progress);
+
+    // Continue moving slightly during slowdown
+    if (this.targetPosition) {
+      const dx = this.targetPosition.x - this.position.x;
+      const dy = this.targetPosition.y - this.position.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance > 2 && currentSpeed > 5) {
+        const moveDistance = (currentSpeed * _deltaTime) / 1000;
+        const ratio = Math.min(moveDistance / distance, 1);
+        this.position = {
+          x: this.position.x + dx * ratio,
+          y: this.position.y + dy * ratio,
+        };
+      }
+    }
+
+    // Wobble effect while slowing down
+    const wobble = Math.sin(this.stateTimer * 10 / 1000 * Math.PI * 2) * 2 * (1 - progress);
+
+    return {
+      position: { x: this.position.x + wobble, y: this.position.y },
+      animation: 'run_stop',
+      direction: this.direction,
+    };
+  }
+
+  private handleStumblingState(_deltaTime: number): BehaviorResult {
+    // Stumble animation after hitting wall
+    if (this.stateTimer > this.STUMBLE_DURATION) {
+      this.transitionTo('crying');
+      return this.handleCryingState(_deltaTime);
+    }
+
+    // Impact wobble - stronger at start, fading
+    const progress = this.stateTimer / this.STUMBLE_DURATION;
+    const shakeIntensity = 6 * (1 - progress);
+    const shakeOffset = Math.sin(this.stateTimer * 15 / 1000 * Math.PI * 2) * shakeIntensity;
+
+    return {
+      position: { x: this.position.x + shakeOffset, y: this.position.y },
+      animation: 'stumble',
+      direction: this.direction,
+    };
+  }
+
+  private handleCryingState(_deltaTime: number): BehaviorResult {
+    // Crying animation after stumble
+    if (this.stateTimer > this.CRY_DURATION) {
+      this.wasRunning = false;
+      this.transitionTo('idle');
+      return this.handleIdleState();
+    }
+
+    // Gentle sob shake
+    const sobSpeed = 6;
+    const sobAmount = 3;
+    const sobOffset = Math.sin(this.stateTimer * sobSpeed / 1000 * Math.PI * 2) * sobAmount;
+
+    return {
+      position: { x: this.position.x + sobOffset, y: this.position.y },
+      animation: 'cry',
+      direction: this.direction,
+    };
+  }
+
   private handleLandingState(deltaTime: number): BehaviorResult {
     const dt = deltaTime / 1000; // Convert to seconds
 
@@ -448,26 +697,36 @@ export class PetBehavior {
   private pickRandomDirection(): void {
     const maxAttempts = 5;
 
+    // Determine distance multiplier based on state
+    let distanceMultiplier = 1.0;
+    if (this.isTired) {
+      distanceMultiplier = this.TIRED_DISTANCE_MULTIPLIER;
+    } else if (this.happiness > this.HAPPINESS_RUN_THRESHOLD) {
+      distanceMultiplier = this.RUN_DISTANCE_MULTIPLIER;
+    }
+
     for (let i = 0; i < maxAttempts; i++) {
       // Pick random angle (0 to 360 degrees)
       const angle = Math.random() * Math.PI * 2;
-      // Random distance 50-200 pixels
-      const distance = this.randomInRange(50, 200);
+      // Distance based on state: tired=40-75, walk=80-150, run=240-450
+      const distance = this.randomInRange(
+        this.WANDER_DISTANCE_MIN * distanceMultiplier,
+        this.WANDER_DISTANCE_MAX * distanceMultiplier
+      );
 
       // Calculate target based on direction
+      // Don't clamp to screen - allow running into edges!
       const targetX = this.position.x + Math.cos(angle) * distance;
       const targetY = this.position.y + Math.sin(angle) * distance;
 
-      // Clamp to screen bounds
-      const clamped = this.clampToScreen({ x: targetX, y: targetY });
-
-      // Check if target is far enough (avoid edge cases when pet is in corner)
-      const dx = clamped.x - this.position.x;
-      const dy = clamped.y - this.position.y;
+      // Check if target direction makes sense (not completely outside screen)
+      // Pet can run toward edge but we need valid direction
+      const dx = targetX - this.position.x;
+      const dy = targetY - this.position.y;
       const actualDistance = Math.sqrt(dx * dx + dy * dy);
 
       if (actualDistance >= 20) {
-        this.targetPosition = clamped;
+        this.targetPosition = { x: targetX, y: targetY };
         return;
       }
     }
@@ -604,11 +863,6 @@ export class PetBehavior {
     return this.currentState === 'sleeping';
   }
 
-  // Low energy state (energy < 20)
-  setLowEnergy(isLow: boolean): void {
-    this.isLowEnergy = isLow;
-  }
-
   // Set happiness level for mood-based idle animations
   setHappiness(value: number): void {
     this.happiness = value;
@@ -617,7 +871,7 @@ export class PetBehavior {
 
   // Set energy level
   setEnergy(value: number): void {
-    this.isLowEnergy = value < 20;
+    this.energy = value;
   }
 
   // Trigger eating animation
@@ -659,5 +913,10 @@ export class PetBehavior {
     if (this.currentState === 'idle' || this.currentState === 'wandering' || this.currentState === 'landing' || this.currentState === 'reacting') {
       this.transitionTo('shaking');
     }
+  }
+
+  // Set callback for when pet gets hurt (running into edge)
+  setOnHurtCallback(callback: () => void): void {
+    this.onHurtCallback = callback;
   }
 }
