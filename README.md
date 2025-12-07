@@ -66,14 +66,15 @@ npm run tauri build
 
 | Status | Action | Key/Mouse | Effect | Cooldown |
 |--------|--------|-----------|--------|----------|
-| ✅ | **Click** | Left click | Pet jumps happily (+5 😊) | - |
-| ✅ | **Drag** | Hold & drag | Move pet anywhere (wakes up if sleeping) | - |
-| ✅ | **Voice** | `V` | Talk to pet via AI (+8 😊) | - |
+| ✅ | **Click** | Left click | Pet jumps happily (+5 😊, +1 ⚡) | 3s |
+| ✅ | **Drag** | Hold & drag | Move pet (-5 😊, -5 ⚡) | 1s |
+| ✅ | **Voice** | `V` | Talk to pet via AI (+15 😊, -5 ⚡) | 5s |
 | ✅ | **Dance** | `D` | Pet dances with music notes (+15 😊, -15 ⚡) | 60s |
-| ✅ | **Treat** | `T` | Give treat with eating animation (+8 😊, +10 ⚡) | 20x/day |
-| ✅ | **Lullaby** | `L` | Sing pet to sleep (yawn → sleep) | - |
+| ✅ | **Treat** | `T` | Give treat with eating animation (+10 😊, +8 ⚡) | 10s, 10x/day |
+| ✅ | **Lullaby** | `L` | Sing pet to sleep (+5 😊) | 60s |
 | ✅ | **Play Catch** | `C` | Play catch with bouncy animation (+12 😊, -10 ⚡) | 30s |
-| ✅ | **Shake** | `S` | Gentle shake wiggle (+3 😊, +5 ⚡) | 5s |
+| ✅ | **Shake** | `S` | Gentle shake wiggle (+5 😊, +3 ⚡) | 3s |
+| ✅ | **Quiet Time** | - | Let pet rest (+8 😊, +10 ⚡) | 3m |
 
 ### Mood System
 
@@ -106,15 +107,36 @@ Your pet has 2 core stats:
 - When on cooldown or low energy → shows ❌ icon and pet shakes head
 - Hover over pet to see current Happiness/Energy bars
 
+### Balance Philosophy
+
+The interaction system is designed with these principles:
+
+| Principle | Description |
+|-----------|-------------|
+| 🎯 **Diversify** | Use multiple interaction types, not just spam one |
+| ⚖️ **Risk-Reward** | Fun activities (dance, play) cost energy → need rest/treat balance |
+| 🧘 **Patience Pays** | Quiet time gives good rewards for letting pet rest |
+| 🚫 **Gentle Care** | Dragging pet too much hurts their mood significantly |
+
+**Energy Levels:**
+| Level | Range | Pet Behavior |
+|-------|-------|--------------|
+| Hyperactive | 75-100 | Full of energy, ready for anything! |
+| Energetic | 55-74 | Happy and playful |
+| Normal | 30-54 | Content, may need a snack |
+| Tired | 10-29 | Sluggish, prefers rest |
+| Exhausted | 0-9 | Forced sleep triggered |
+
 ### Tips & Tricks
 
 | Tip | Description |
 |-----|-------------|
-| 🌙 Auto Sleep | Pet auto-sleeps when energy < 20 - give treats for quick recovery |
+| 🌙 Auto Sleep | Pet auto-sleeps when energy < 10 - give treats for quick recovery |
 | 🎵 Lullaby | Use when pet is too hyper, helps them rest |
-| 🧘 Meditate | Best way to restore energy without losing happiness |
+| 🧘 Quiet Time | Best way to restore energy without losing happiness |
 | 💬 Voice Chat | Talk frequently to keep your pet happy! |
-| 🎯 Combo | Dance → Meditate → Treat to maximize both stats |
+| 🎯 Combo | Dance → Quiet Time → Treat to maximize both stats |
+| ⚠️ Don't Spam | Each interaction has diminishing returns if overused |
 
 ## Tech Stack
 
