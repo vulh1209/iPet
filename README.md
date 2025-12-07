@@ -70,8 +70,10 @@ npm run tauri build
 | ✅ | **Drag** | Hold & drag | Move pet anywhere (wakes up if sleeping) | - |
 | ✅ | **Voice** | `V` | Talk to pet via AI (+8 😊) | - |
 | ✅ | **Dance** | `D` | Pet dances with music notes (+15 😊, -15 ⚡) | 60s |
-| ✅ | **Treat** | `T` | Give treat with eating animation (+8 😊, +10 ⚡) | 5x/day |
+| ✅ | **Treat** | `T` | Give treat with eating animation (+8 😊, +10 ⚡) | 20x/day |
 | ✅ | **Lullaby** | `L` | Sing pet to sleep (yawn → sleep) | - |
+| ✅ | **Play Catch** | `C` | Play catch with bouncy animation (+12 😊, -10 ⚡) | 30s |
+| ✅ | **Shake** | `S` | Gentle shake wiggle (+3 😊, +5 ⚡) | 5s |
 
 ### Mood System
 

@@ -126,7 +126,7 @@ export const INTERACTIONS: Record<string, Interaction> = {
     happinessChange: 8,
     energyChange: 10,
     cooldownMs: 0,
-    dailyLimit: 5,
+    dailyLimit: 20,
   },
   playCatch: {
     id: 'playCatch',

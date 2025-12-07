@@ -13,7 +13,9 @@ type BehaviorState =
   | 'eating'       // When eating treat
   | 'dancing'      // When dance party
   | 'yawning'      // Pre-sleep transition
-  | 'waking';      // Post-sleep transition
+  | 'waking'       // Post-sleep transition
+  | 'playing'      // When playing catch
+  | 'shaking';     // When being gently shaken
 
 interface BehaviorResult {
   position: Position;
@@ -56,6 +58,8 @@ export class PetBehavior {
   private readonly DANCE_DURATION = 6000; // ms - dance party duration (~7 loops)
   private readonly YAWN_DURATION = 1000; // ms - 4 frames * 250ms
   private readonly WAKE_DURATION = 800; // ms - 4 frames * 200ms
+  private readonly PLAY_DURATION = 3000; // ms - playing catch animation
+  private readonly SHAKE_DURATION = 800; // ms - gentle shake animation
 
   private readonly SPRING_STIFFNESS = 150;   // Slower oscillation
   private readonly SPRING_DAMPING = 5;       // Less damping = more bounces
@@ -105,6 +109,10 @@ export class PetBehavior {
         return this.handleYawningState();
       case 'waking':
         return this.handleWakingState();
+      case 'playing':
+        return this.handlePlayingState(deltaTime);
+      case 'shaking':
+        return this.handleShakingState(deltaTime);
       default:
         return this.handleIdleState();
     }
@@ -322,6 +330,46 @@ export class PetBehavior {
     };
   }
 
+  private handlePlayingState(_deltaTime: number): BehaviorResult {
+    // Playing catch - bouncy happy animation with vertical bounce
+    if (this.stateTimer > this.PLAY_DURATION) {
+      this.transitionTo('reacting');
+      return this.handleReactingState();
+    }
+
+    // Bounce effect: pet jumps up and down while playing
+    const bounceSpeed = 6; // bounces per second
+    const bounceHeight = 25; // pixels - more visible bounce
+    const phase = this.stateTimer * bounceSpeed / 1000 * Math.PI;
+    const bounceOffset = Math.abs(Math.sin(phase)) * bounceHeight;
+
+    return {
+      position: { x: this.position.x, y: this.position.y - bounceOffset },
+      animation: 'happy',
+      direction: this.direction,
+      squishFactor: 1 + Math.sin(phase) * 0.15, // more visible squish
+    };
+  }
+
+  private handleShakingState(_deltaTime: number): BehaviorResult {
+    // Gentle shake - wiggle side to side
+    if (this.stateTimer > this.SHAKE_DURATION) {
+      this.transitionTo('idle');
+      return this.handleIdleState();
+    }
+
+    // Wiggle effect: gentle horizontal shake
+    const shakeSpeed = 12; // shakes per second
+    const shakeAmount = 8; // pixels - more visible shake
+    const shakeOffset = Math.sin(this.stateTimer * shakeSpeed / 1000 * Math.PI * 2) * shakeAmount;
+
+    return {
+      position: { x: this.position.x + shakeOffset, y: this.position.y },
+      animation: 'happy',
+      direction: this.direction,
+    };
+  }
+
   private handleLandingState(deltaTime: number): BehaviorResult {
     const dt = deltaTime / 1000; // Convert to seconds
 
@@ -509,6 +557,20 @@ export class PetBehavior {
   onTalkEnd(): void {
     if (this.currentState === 'talking') {
       this.transitionTo('idle');
+    }
+  }
+
+  // Trigger playing animation (play catch)
+  onPlay(): void {
+    if (this.currentState === 'idle' || this.currentState === 'wandering' || this.currentState === 'landing' || this.currentState === 'reacting') {
+      this.transitionTo('playing');
+    }
+  }
+
+  // Trigger shaking animation (gentle shake)
+  onShake(): void {
+    if (this.currentState === 'idle' || this.currentState === 'wandering' || this.currentState === 'landing' || this.currentState === 'reacting') {
+      this.transitionTo('shaking');
     }
   }
 }

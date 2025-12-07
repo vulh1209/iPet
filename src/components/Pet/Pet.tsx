@@ -335,6 +335,26 @@ export function Pet() {
           behaviorRef.current?.onReject(); // Show rejection (cooldown)
         }
       }
+
+      // Press "C" for play catch
+      if (key === 'c' && !isSleeping) {
+        e.preventDefault();
+        if (triggerInteraction('playCatch')) {
+          behaviorRef.current?.onPlay();
+        } else {
+          behaviorRef.current?.onReject();
+        }
+      }
+
+      // Press "S" for gentle shake
+      if (key === 's' && !isSleeping) {
+        e.preventDefault();
+        if (triggerInteraction('shake')) {
+          behaviorRef.current?.onShake();
+        } else {
+          behaviorRef.current?.onReject();
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
