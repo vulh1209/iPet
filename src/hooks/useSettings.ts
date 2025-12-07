@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { settingsService } from '../services/SettingsService';
 import { AppSettings, DEFAULT_SETTINGS } from '../types/settings';
 
@@ -19,9 +20,20 @@ export function useSettings(): UseSettingsReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load settings on mount
+  // Load settings on mount and listen for changes from other windows
   useEffect(() => {
     loadSettings();
+
+    // Listen for settings-changed event from other windows (e.g., Settings window)
+    const unlisten = listen<AppSettings>('settings-changed', (event) => {
+      console.log('Settings changed from another window:', event.payload);
+      settingsService.clearCache();
+      setSettings(event.payload);
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, []);
 
   const loadSettings = async () => {

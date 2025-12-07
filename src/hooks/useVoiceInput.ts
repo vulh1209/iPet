@@ -219,9 +219,9 @@ export function useVoiceInput(): UseVoiceInputReturn {
       return;
     }
 
-    // Start recognition
+    // Start recognition (now async to capture MediaStream for proper mic release)
     try {
-      const started = recognitionRef.current?.start({
+      const started = await recognitionRef.current?.start({
         onResult: handleResult,
         onError: handleError,
         onEnd: handleEnd,

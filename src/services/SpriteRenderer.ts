@@ -3,7 +3,7 @@ import { LoadedSprite } from '../types/sprite';
 import { getFrameRect } from './SpriteLoader';
 
 /**
- * Draw sprite to canvas with transforms (direction flip, squish effect)
+ * Draw sprite to canvas with transforms (direction flip, squish effect, color tint)
  * @returns true if drawing was successful
  */
 export function drawSprite(
@@ -13,7 +13,8 @@ export function drawSprite(
   direction: Direction,
   squishFactor: number,
   frameIndex: number,
-  canvasSize: number
+  canvasSize: number,
+  tintColor?: string | null
 ): boolean {
   const animDef = sprite.config.animations[animation];
   const spriteImage = sprite.images.get(animation);
@@ -64,6 +65,16 @@ export function drawSprite(
     frameRect.x, frameRect.y, frameRect.width, frameRect.height,
     destX, destY, destWidth, destHeight
   );
+
+  // Apply color tint using composite operation
+  if (tintColor) {
+    ctx.globalCompositeOperation = 'source-atop';
+    ctx.fillStyle = tintColor;
+    ctx.globalAlpha = 0.4; // Blend strength - keeps original details visible
+    ctx.fillRect(0, 0, canvasSize, canvasSize);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
 
   ctx.restore();
   return true;

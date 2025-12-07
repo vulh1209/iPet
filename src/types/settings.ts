@@ -13,6 +13,29 @@ export const PERSONALITY_NAMES: Record<Exclude<PersonalityPreset, 'custom'>, str
   drowsy: 'Drowsy (Buồn ngủ)',
 };
 
+// Pet color presets
+export type PetColorPreset = 'original' | 'pink' | 'mint' | 'golden' | 'purple' | 'coral' | 'custom';
+
+export const PET_COLOR_PRESETS: Record<PetColorPreset, string | null> = {
+  original: null,           // No tint, keep original color
+  pink: '#FF69B4',          // Hot Pink
+  mint: '#98FB98',          // Pale Green
+  golden: '#FFD700',        // Gold
+  purple: '#9370DB',        // Medium Purple
+  coral: '#FF7F50',         // Coral
+  custom: null,             // User-defined custom color
+};
+
+export const PET_COLOR_NAMES: Record<PetColorPreset, string> = {
+  original: 'Original',
+  pink: 'Pink',
+  mint: 'Mint',
+  golden: 'Golden',
+  purple: 'Purple',
+  coral: 'Coral',
+  custom: 'Custom',
+};
+
 // Settings interfaces (must match Rust types)
 export interface PersonalityConfig {
   preset: PersonalityPreset;
@@ -32,6 +55,9 @@ export interface AppSettings {
   conversation_retention_days: number;
   show_energy_bar: boolean;
   show_happiness_bar: boolean;
+  pet_color_preset: PetColorPreset;
+  pet_custom_color: string;  // Custom hex color when preset is 'custom'
+  pet_bloom_enabled: boolean;
 }
 
 // Default settings
@@ -49,6 +75,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   conversation_retention_days: 30,
   show_energy_bar: true,
   show_happiness_bar: true,
+  pet_color_preset: 'original',
+  pet_custom_color: '#FF6B9D',  // Default custom color (pink)
+  pet_bloom_enabled: false,
 };
 
 // Get personality traits string based on config

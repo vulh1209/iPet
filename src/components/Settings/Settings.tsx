@@ -6,6 +6,9 @@ import {
   PersonalityPreset,
   PERSONALITY_NAMES,
   PERSONALITY_PRESETS,
+  PetColorPreset,
+  PET_COLOR_PRESETS,
+  PET_COLOR_NAMES,
 } from '../../types/settings';
 import './Settings.css';
 
@@ -215,6 +218,66 @@ export function Settings() {
                   type="checkbox"
                   checked={formData.show_happiness_bar}
                   onChange={(e) => handleChange('show_happiness_bar', e.target.checked)}
+                />
+                <span className="toggle-track"></span>
+              </label>
+            </div>
+
+            {/* Pet Color Presets */}
+            <div className="setting-row">
+              <span className="row-label">Pet Color</span>
+            </div>
+            <div className="color-chips">
+              {(Object.keys(PET_COLOR_PRESETS) as PetColorPreset[]).map((preset) => (
+                <button
+                  key={preset}
+                  className={`color-chip ${preset === 'custom' ? 'color-chip-custom' : ''} ${formData.pet_color_preset === preset ? 'active' : ''}`}
+                  style={{
+                    backgroundColor: preset === 'custom'
+                      ? formData.pet_custom_color
+                      : (PET_COLOR_PRESETS[preset] || undefined),
+                  }}
+                  onClick={() => handleChange('pet_color_preset', preset)}
+                  title={PET_COLOR_NAMES[preset]}
+                >
+                  {preset === 'custom' ? '🎨' : (formData.pet_color_preset === preset && '✓')}
+                </button>
+              ))}
+            </div>
+
+            {/* Custom Color Picker - shown when custom is selected */}
+            {formData.pet_color_preset === 'custom' && (
+              <div className="custom-color-picker">
+                <input
+                  type="color"
+                  value={formData.pet_custom_color}
+                  onChange={(e) => handleChange('pet_custom_color', e.target.value)}
+                  className="color-input"
+                />
+                <input
+                  type="text"
+                  value={formData.pet_custom_color}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                      handleChange('pet_custom_color', val);
+                    }
+                  }}
+                  className="color-hex-input"
+                  placeholder="#FF6B9D"
+                  maxLength={7}
+                />
+              </div>
+            )}
+
+            {/* Bloom Effect Toggle */}
+            <div className="setting-row">
+              <span className="row-label">Bloom Effect</span>
+              <label className="toggle">
+                <input
+                  type="checkbox"
+                  checked={formData.pet_bloom_enabled}
+                  onChange={(e) => handleChange('pet_bloom_enabled', e.target.checked)}
                 />
                 <span className="toggle-track"></span>
               </label>

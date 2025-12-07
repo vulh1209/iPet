@@ -28,12 +28,19 @@ A kawaii slime pet that lives on your desktop, powered by Tauri + React + TypeSc
 - [x] Short kawaii responses (3 words + emojis)
 - [x] Beautiful glassmorphism speech bubble
 
+### Pet Customization
+- [x] Color tint presets (Original, Pink, Mint, Golden, Purple, Coral)
+- [x] Custom color picker with hex input
+- [x] Bloom/glow effect (toggleable)
+- [x] Real-time preview - changes apply instantly
+
 ### Settings
 - [x] System tray menu
 - [x] Personality presets (Bubbles, Sage, Drowsy, Custom)
 - [x] Dark/light theme support
 - [x] Configurable API key
 - [x] Toggle energy bar & happiness bar visibility
+- [x] Pet color customization with live reload
 
 ## Installation
 
@@ -205,7 +212,8 @@ ipet/
 - [x] Happiness & Energy bar UI
 
 ### In Progress
-- [ ] Multiple pet skins
+- [x] Pet color customization (tint + bloom effects)
+- [ ] Multiple pet skins (sprite sheets)
 
 ### Planned
 - [x] macOS distribution (GitHub Releases + CI/CD)

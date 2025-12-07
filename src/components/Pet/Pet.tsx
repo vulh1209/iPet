@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { PetBehavior } from '../../services/PetBehavior';
 import { AnimationType, Direction } from '../../types';
+import { PET_COLOR_PRESETS, PetColorPreset } from '../../types/settings';
 import { useSprite } from '../../hooks/useSprite';
 import { useVoiceInput } from '../../hooks/useVoiceInput';
 import { useSettings } from '../../hooks/useSettings';
@@ -162,7 +163,13 @@ export function Pet() {
               currentSquish !== lastSquishRef.current;
 
             if (needsRedraw) {
-              drawSprite(ctx, sprite, currentAnimation, currentDirection, currentSquish, newFrame, WINDOW_SIZE);
+              // Get color tint from settings (use custom color if preset is 'custom')
+              const colorPreset = (settings?.pet_color_preset ?? 'original') as PetColorPreset;
+              const tintColor = colorPreset === 'custom'
+                ? settings?.pet_custom_color
+                : PET_COLOR_PRESETS[colorPreset];
+
+              drawSprite(ctx, sprite, currentAnimation, currentDirection, currentSquish, newFrame, WINDOW_SIZE, tintColor);
 
               // Update tracking refs
               lastFrameRef.current = newFrame;
@@ -181,7 +188,7 @@ export function Pet() {
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
     };
-  }, [isDragging, sprite, spriteLoading]);
+  }, [isDragging, sprite, spriteLoading, settings?.pet_color_preset, settings?.pet_custom_color]);
 
   // Click = pet react + mood interaction
   const handleClick = useCallback(() => {
@@ -316,7 +323,11 @@ export function Pet() {
           width={WINDOW_SIZE}
           height={WINDOW_SIZE}
           onMouseDown={handleMouseDown}
-          className="pet-canvas"
+          className={`pet-canvas ${settings?.pet_bloom_enabled && settings.pet_color_preset !== 'custom' ? `bloom-${settings.pet_color_preset}` : ''}`}
+          style={settings?.pet_bloom_enabled && settings.pet_color_preset === 'custom' ? {
+            filter: `drop-shadow(0 0 6px ${settings.pet_custom_color}99) drop-shadow(0 0 12px ${settings.pet_custom_color}80)`,
+            animation: 'bloom-pulse 2s ease-in-out infinite',
+          } : undefined}
         />
 
         {/* Happiness bar above energy bar */}

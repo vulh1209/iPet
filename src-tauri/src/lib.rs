@@ -120,6 +120,12 @@ pub struct AppSettings {
     pub show_energy_bar: bool,
     #[serde(default = "default_show_happiness_bar")]
     pub show_happiness_bar: bool,
+    #[serde(default = "default_pet_color_preset")]
+    pub pet_color_preset: String,
+    #[serde(default = "default_pet_custom_color")]
+    pub pet_custom_color: String,
+    #[serde(default)]
+    pub pet_bloom_enabled: bool,
 }
 
 fn default_show_energy_bar() -> bool {
@@ -128,6 +134,14 @@ fn default_show_energy_bar() -> bool {
 
 fn default_show_happiness_bar() -> bool {
     true
+}
+
+fn default_pet_color_preset() -> String {
+    "original".to_string()
+}
+
+fn default_pet_custom_color() -> String {
+    "#FF6B9D".to_string()
 }
 
 impl Default for AppSettings {
@@ -146,6 +160,9 @@ impl Default for AppSettings {
             conversation_retention_days: 30,
             show_energy_bar: true,
             show_happiness_bar: true,
+            pet_color_preset: "original".to_string(),
+            pet_custom_color: "#FF6B9D".to_string(),
+            pet_bloom_enabled: false,
         }
     }
 }

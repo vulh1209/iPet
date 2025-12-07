@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { emit } from '@tauri-apps/api/event';
 import { AppSettings, DEFAULT_SETTINGS } from '../types/settings';
 
 /**
@@ -38,12 +39,14 @@ export class SettingsService {
   }
 
   /**
-   * Save settings to disk
+   * Save settings to disk and notify other windows
    */
   async saveSettings(settings: AppSettings): Promise<void> {
     try {
       await invoke('save_settings', { settings });
       this.cachedSettings = settings;
+      // Emit event to notify other windows (like Pet) that settings changed
+      await emit('settings-changed', settings);
     } catch (error) {
       console.error('Failed to save settings:', error);
       throw new Error(`Failed to save settings: ${error}`);

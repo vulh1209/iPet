@@ -84,6 +84,7 @@ export class SpeechRecognitionService {
   private isListening = false;
   private callbacks: SpeechRecognitionCallbacks | null = null;
   private config: SpeechRecognitionConfig;
+  private mediaStream: MediaStream | null = null; // Track MediaStream to force release mic
 
   constructor(config: SpeechRecognitionConfig) {
     this.config = config;
@@ -253,7 +254,7 @@ export class SpeechRecognitionService {
   /**
    * Start listening for speech
    */
-  start(callbacks: SpeechRecognitionCallbacks): boolean {
+  async start(callbacks: SpeechRecognitionCallbacks): Promise<boolean> {
     if (!this.recognition) {
       callbacks.onError('Speech recognition not supported');
       return false;
@@ -265,13 +266,35 @@ export class SpeechRecognitionService {
 
     this.callbacks = callbacks;
 
+    // Capture MediaStream first so we can force release it later
+    // This is needed because WKWebView doesn't release mic when SpeechRecognition stops
+    try {
+      this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (error) {
+      console.warn('Could not capture MediaStream for cleanup:', error);
+      // Continue anyway - SpeechRecognition might still work
+    }
+
     try {
       this.recognition.start();
       return true;
     } catch (error) {
       console.error('Failed to start recognition:', error);
+      this.releaseMediaStream();
       callbacks.onError('Failed to start recognition');
       return false;
+    }
+  }
+
+  /**
+   * Release MediaStream to force mic indicator off
+   */
+  private releaseMediaStream(): void {
+    if (this.mediaStream) {
+      this.mediaStream.getTracks().forEach(track => {
+        track.stop();
+      });
+      this.mediaStream = null;
     }
   }
 
@@ -310,6 +333,8 @@ export class SpeechRecognitionService {
    */
   destroy(): void {
     this.abort();
+    // Force release mic by stopping all MediaStream tracks
+    this.releaseMediaStream();
     if (this.recognition) {
       this.recognition.onstart = null;
       this.recognition.onend = null;
